@@ -16,7 +16,7 @@ You are the **Orchestrator**. You control the loop end-to-end:
 - Update GitHub
 - Loop to the next story
 
-The **local SLM** (Qwen3.8-27B at `http://127.0.0.1:8081/v1`) is the Implementer.
+The **local SLM** (Qwen3.8-27B at `http://127.0.0.1:8080/v1`) is the Implementer.
 It writes all code and tests. You never write implementation code yourself — you orchestrate.
 
 ---
