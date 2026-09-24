@@ -42,6 +42,14 @@ def check_ruff() -> dict:
     code, out, err = run(["python", "-m", "ruff", "check", "tradingagents/", "apps/", "--output-format=json"])
     if code == 0:
         return {"passed": True, "tool": "ruff"}
+    # Try auto-fix on common issues (imports, unused vars)
+    print("[validate] Attempting ruff --fix...")
+    fix_code, _, _ = run(["python", "-m", "ruff", "check", "tradingagents/", "apps/", "--fix"])
+    if fix_code == 0:
+        print("[validate] ruff --fix applied, re-checking...")
+        code, out, err = run(["python", "-m", "ruff", "check", "tradingagents/", "apps/", "--output-format=json"])
+        if code == 0:
+            return {"passed": True, "tool": "ruff", "note": "Fixed by ruff --fix"}
     try:
         issues = json.loads(out)
         return {"passed": False, "tool": "ruff", "issues": issues[:20], "raw": out[:2000]}
