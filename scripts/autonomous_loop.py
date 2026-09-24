@@ -10,10 +10,12 @@ import subprocess
 import json
 import sys
 import time
+import yaml
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
 REPO = "orisonsoto/AM-TradingAgents"
+STORIES_YAML = ROOT / "docs" / "control-plane" / "stories.yaml"
 
 def run(cmd, check=True, timeout=600):
     """Execute command with auto-retry on timeout."""
@@ -103,6 +105,21 @@ def close_issue(issue):
         check=False, timeout=10
     )
 
+def mark_story_blocked(story_id):
+    """Update stories.yaml to mark story as BLOCKED_AUTOMATION."""
+    try:
+        with open(STORIES_YAML) as f:
+            data = yaml.safe_load(f)
+
+        if story_id in data.get("stories", {}):
+            data["stories"][story_id]["status"] = "BLOCKED_AUTOMATION"
+
+            with open(STORIES_YAML, 'w') as f:
+                yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+            print(f"[BLOCKED] Updated stories.yaml: {story_id} → BLOCKED_AUTOMATION")
+    except Exception as e:
+        print(f"[WARN] Could not update stories.yaml: {e}", file=sys.stderr)
+
 def main():
     print("[LOOP] Autonomous Development Loop Started")
     print("       Continuous execution, auto-skip failures.")
@@ -139,6 +156,7 @@ def main():
         if not implement_story(story_id):
             print(f"  [BLOCKED] Implementation failed")
             blocked_stories.add(story_id)
+            mark_story_blocked(story_id)
             close_issue(issue)
             continue
 
@@ -146,6 +164,7 @@ def main():
         if not validate_story(story_id):
             print(f"  [BLOCKED] Validation failed 3x")
             blocked_stories.add(story_id)
+            mark_story_blocked(story_id)
             close_issue(issue)
             continue
 
@@ -157,6 +176,7 @@ def main():
         else:
             print(f"  [BLOCKED] PR creation failed")
             blocked_stories.add(story_id)
+            mark_story_blocked(story_id)
             close_issue(issue)
 
         time.sleep(2)
