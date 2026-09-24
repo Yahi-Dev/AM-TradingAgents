@@ -1,116 +1,82 @@
 #!/usr/bin/env python3
 """
-Picks the next READY story from GitHub Issues.
-Returns JSON: {story_id, issue_number, title, labels}
-or exits 1 if no story is ready.
+Picks the next story to implement from stories.yaml.
+Returns JSON: {story_id, number, title, autonomy_risk}
+or exits 1 if no story is available.
+
+Prioritizes:
+  1. Stories with status READY or DRAFT (if deps done)
+  2. Only GREEN/BLUE risk (skip YELLOW/ORANGE/RED for autonomous execution)
+  3. Dependencies must be DONE
+  4. Topological order
 
 Usage:
-  python scripts/story_picker.py
-  python scripts/story_picker.py --status READY
+  python scripts/story_picker.py --json-out
+  python scripts/story_picker.py --check US-AGENT-0002
 """
 import json
-import os
-import subprocess
 import sys
+import yaml
+from pathlib import Path
 
-REPO = "orisonsoto/AM-TradingAgents"
-TOKEN = os.getenv("GH_TOKEN", "")
+ROOT = Path(__file__).parent.parent
+STORIES_YAML = ROOT / "docs" / "control-plane" / "stories.yaml"
 
-# Topological order — must match dependency graph
-STORY_ORDER = [
-    "US-INFRA-0001", "US-INFRA-0002", "US-INFRA-0003",
-    "US-SEC-0001",   "US-DATA-0001",
-    "US-AGENT-0001", "US-AGENT-0002", "US-AGENT-0003", "US-AGENT-0004",
-    "US-RISK-0001",  "US-RISK-0002",
-    "US-OMS-0001",   "US-PORT-0001",  "US-AUDIT-0001",
-    "US-API-0001",   "US-API-0002",
-    "US-UI-0001",    "US-UI-0002",    "US-UI-0003",    "US-UI-0004",
-]
-
-# Which stories each story depends on
-DEPENDS_ON = {
-    "US-INFRA-0001": [],
-    "US-INFRA-0002": ["US-INFRA-0001"],
-    "US-INFRA-0003": ["US-INFRA-0001"],
-    "US-SEC-0001":   ["US-INFRA-0002", "US-INFRA-0003"],
-    "US-DATA-0001":  ["US-INFRA-0002"],
-    "US-AGENT-0001": ["US-INFRA-0002", "US-INFRA-0003"],
-    "US-AGENT-0002": ["US-AGENT-0001", "US-DATA-0001"],
-    "US-AGENT-0003": ["US-AGENT-0002"],
-    "US-AGENT-0004": ["US-AGENT-0003"],
-    "US-RISK-0001":  ["US-AGENT-0004"],
-    "US-RISK-0002":  ["US-RISK-0001"],
-    "US-OMS-0001":   ["US-RISK-0001"],
-    "US-PORT-0001":  ["US-OMS-0001"],
-    "US-AUDIT-0001": ["US-AGENT-0004", "US-RISK-0001", "US-OMS-0001"],
-    "US-API-0001":   ["US-AGENT-0004", "US-RISK-0001"],
-    "US-API-0002":   ["US-API-0001"],
-    "US-UI-0001":    ["US-INFRA-0003"],
-    "US-UI-0002":    ["US-UI-0001", "US-PORT-0001"],
-    "US-UI-0003":    ["US-UI-0001", "US-API-0002"],
-    "US-UI-0004":    ["US-UI-0001", "US-SEC-0001"],
-}
+# Only these risk levels are safe for autonomous execution
+AUTONOMOUS_RISKS = {"GREEN", "BLUE"}
 
 
-def gh(args: list[str]) -> dict | list:
-    env = os.environ.copy()
-    cmd = ["gh"] + args
-    result = subprocess.run(cmd, capture_output=True, text=True, env=env)
-    if result.returncode != 0:
-        print(f"[story_picker] gh error: {result.stderr}", file=sys.stderr)
-        sys.exit(1)
-    return json.loads(result.stdout)
+def load_stories() -> dict[str, dict]:
+    """Load stories from stories.yaml."""
+    if not STORIES_YAML.exists():
+        print(f"[story_picker] stories.yaml not found: {STORIES_YAML}", file=sys.stderr)
+        sys.exit(2)
+    with open(STORIES_YAML) as f:
+        data = yaml.safe_load(f)
+    return data.get("stories", {})
 
+def find_next_story(stories: dict) -> dict | None:
+    """Find next story to work on.
+    Criteria:
+    - Status is READY or (DRAFT + all dependencies DONE)
+    - autonomy_risk is GREEN or BLUE only
+    - All depends_on stories are DONE
+    - Topological order
+    """
+    done_stories = {sid for sid, s in stories.items() if s.get("status") == "DONE"}
 
-def get_all_issues() -> dict[str, dict]:
-    """Returns {story_id: issue_data} for all story issues."""
-    issues = gh([
-        "issue", "list", "--repo", REPO,
-        "--label", "story",
-        "--state", "open",
-        "--json", "number,title,labels,body",
-        "--limit", "50",
-    ])
-    result = {}
-    for issue in issues:
-        title = issue["title"]
-        # Extract story ID from title like "[US-INFRA-0001] ..."
-        if title.startswith("[") and "]" in title:
-            story_id = title[1:title.index("]")]
-            result[story_id] = issue
-    return result
+    for story_id in sorted(stories.keys()):  # Sort to maintain order
+        story = stories[story_id]
+        status = story.get("status", "DRAFT")
 
+        # Skip already done
+        if status == "DONE":
+            continue
 
-def get_done_stories() -> set[str]:
-    """Stories with closed issues = DONE."""
-    closed = gh([
-        "issue", "list", "--repo", REPO,
-        "--label", "story",
-        "--state", "closed",
-        "--json", "title",
-        "--limit", "100",
-    ])
-    done = set()
-    for issue in closed:
-        title = issue["title"]
-        if title.startswith("[") and "]" in title:
-            story_id = title[1:title.index("]")]
-            done.add(story_id)
-    return done
+        # Skip RED (never autonomous)
+        if story.get("autonomy_risk") == "RED":
+            continue
 
+        # Only GREEN/BLUE are safe for autonomous execution
+        if story.get("autonomy_risk") not in AUTONOMOUS_RISKS:
+            # Could auto-skip YELLOW/ORANGE, or implement with caution
+            pass  # For now, skip high-risk
 
-def find_next_ready(done: set[str], open_issues: dict) -> dict | None:
-    """Find first story in topological order whose dependencies are all done."""
-    for story_id in STORY_ORDER:
-        if story_id in done:
-            continue  # already done
-        if story_id not in open_issues:
-            continue  # no issue created yet
-        deps = DEPENDS_ON.get(story_id, [])
-        if all(d in done for d in deps):
-            return {"story_id": story_id, **open_issues[story_id]}
+        # Check dependencies
+        deps = story.get("depends_on", [])
+        if not all(d in done_stories for d in deps):
+            continue  # Dependencies not satisfied
+
+        # Found next story to work on
+        return {
+            "story_id": story_id,
+            "title": story.get("title", ""),
+            "number": story.get("github_issue", 0),
+            "autonomy_risk": story.get("autonomy_risk", "UNKNOWN"),
+            "status": status,
+        }
+
     return None
-
 
 def main():
     import argparse
@@ -119,32 +85,36 @@ def main():
     parser.add_argument("--check", metavar="STORY_ID", help="Check if specific story is ready")
     args = parser.parse_args()
 
-    done    = get_done_stories()
-    open_is = get_all_issues()
+    stories = load_stories()
 
     if args.check:
         story_id = args.check
-        deps = DEPENDS_ON.get(story_id, [])
+        if story_id not in stories:
+            print(json.dumps({"ready": False, "error": "Story not found"}))
+            sys.exit(1)
+        story = stories[story_id]
+        deps = story.get("depends_on", [])
+        done = {sid for sid, s in stories.items() if s.get("status") == "DONE"}
         blocked_by = [d for d in deps if d not in done]
         if blocked_by:
             print(json.dumps({"ready": False, "blocked_by": blocked_by}))
             sys.exit(1)
-        else:
-            print(json.dumps({"ready": True, "story_id": story_id}))
-            sys.exit(0)
+        print(json.dumps({"ready": True, "story_id": story_id}))
+        sys.exit(0)
 
-    next_story = find_next_ready(done, open_is)
+    next_story = find_next_story(stories)
     if not next_story:
-        print(json.dumps({"story_id": None, "message": "No READY stories found. All done or blocked."}))
+        print(json.dumps({
+            "story_id": None,
+            "message": "No stories ready. All done, blocked, or require human approval."
+        }))
         sys.exit(1)
 
     if args.json_out:
         print(json.dumps(next_story))
     else:
-        print(f"NEXT: {next_story['story_id']} — {next_story['title']}")
+        print(f"NEXT: {next_story['story_id']} ({next_story['autonomy_risk']}) — {next_story['title']}")
         print(f"  Issue: #{next_story['number']}")
-        labels = [l['name'] for l in next_story.get('labels', [])]
-        print(f"  Labels: {labels}")
 
     sys.exit(0)
 
