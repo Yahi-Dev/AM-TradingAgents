@@ -19,8 +19,8 @@ from pathlib import Path
 # Config — overridable via env
 BASE_URL = os.getenv("LOCAL_SLM_URL", "http://127.0.0.1:8080/v1")
 MODEL    = os.getenv("LOCAL_SLM_MODEL", "qwen3.8-27b")
-TIMEOUT  = int(os.getenv("LOCAL_SLM_TIMEOUT", "300"))   # 5 min per request
-MAX_TOKENS = int(os.getenv("LOCAL_SLM_MAX_TOKENS", "8192"))
+TIMEOUT  = int(os.getenv("LOCAL_SLM_TIMEOUT", "480"))   # 8 min per request
+MAX_TOKENS = int(os.getenv("LOCAL_SLM_MAX_TOKENS", "16384"))
 
 ROOT = Path(__file__).parent.parent
 
@@ -43,7 +43,11 @@ def _post(messages: list[dict], temperature: float = 0.1) -> str:
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             data = json.loads(resp.read().decode())
-            return data["choices"][0]["message"]["content"]
+            msg = data["choices"][0]["message"]
+            # Qwen3 thinking models may put output in reasoning_content when
+            # content is empty. Prefer content; fall back to reasoning_content.
+            content = msg.get("content") or msg.get("reasoning_content") or ""
+            return content
     except urllib.error.URLError as e:
         print(f"[local_model] ERROR connecting to {BASE_URL}: {e}", file=sys.stderr)
         sys.exit(2)
@@ -100,7 +104,8 @@ def build_implement_prompt(story_id: str, extra_context: str = "") -> list[dict]
     story = load_story_contract(story_id)
     arch  = load_architecture_context()
 
-    system = """You are a senior Python engineer implementing user stories for AM-TradingAgents,
+    system = """/no_think
+You are a senior Python engineer implementing user stories for AM-TradingAgents,
 a professional agentic trading platform. Follow these rules absolutely:
 1. Write production-quality Python 3.12+ code with full type hints.
 2. Every function/class needs a short docstring if non-obvious.

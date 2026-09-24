@@ -32,7 +32,7 @@ Cada historia es una unidad autónoma entregable a un agente de desarrollo.
 | 15 | US-API-0002 | SSE event stream /runs/{id}/events | Alimenta el Live Agent Graph | US-API-0001 | PR-015 |
 | 16 | US-AUDIT-0001 | DecisionTrace creation | Trazabilidad de toda decisión | US-AGENT-0004, US-RISK-0001, US-OMS-0001 | PR-016 |
 | 17 | US-UI-0001 | Design system + layout shell (Rail+Topbar) | Base visual para todos los paneles | US-INFRA-0003 | PR-017 |
-| 18 | US-UI-0002 | Panel 01 — Dashboard principal (KPIs) | Primera pantalla del Command Center | US-UI-0001, US-PORT-0001, US-API-0003 | PR-018 |
+| 18 | US-UI-0002 | Panel 01 — Dashboard principal (KPIs) | Primera pantalla del Command Center | US-UI-0001, US-PORT-0001, US-API-0001 | PR-018 |
 | 19 | US-UI-0003 | Panel 02 — Centro Agéntico + Live Graph | El panel más valioso del sistema | US-UI-0001, US-API-0002 | PR-019 |
 | 20 | US-UI-0004 | Onboarding 5 pasos | Necesario para que nuevos tenants usen el sistema | US-UI-0001, US-SEC-0001 | PR-020 |
 

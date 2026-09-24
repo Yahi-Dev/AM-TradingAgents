@@ -1,1 +1,1 @@
-
+"""Test suite for AM-TradingAgents."""
