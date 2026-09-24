@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AM-TradingAgents — Dev Loop Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #0a0e27;
+            color: #e0e0e0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 {
+            color: #00ff88;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-shadow: 0 0 10px rgba(0,255,136,0.3);
+        }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .card {
+            background: #1a1f3a;
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0,255,136,0.1);
+        }
+        .card h2 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        .status.done { background: rgba(0,200,100,0.2); color: #00ff88; }
+        .status.progress { background: rgba(0,150,255,0.2); color: #00aaff; animation: pulse 1.5s infinite; }
+        .status.blocked { background: rgba(255,100,0,0.2); color: #ffaa00; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .story-item {
+            background: rgba(0,255,136,0.05);
+            border-left: 3px solid #00ff88;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 2px;
+            font-size: 0.85em;
+        }
+        .pr-link {
+            color: #00aaff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .pr-link:hover { text-decoration: underline; }
+        .log {
+            background: #000;
+            border: 1px solid #333;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 0.8em;
+            color: #0f0;
+            font-family: 'Monaco', monospace;
+        }
+        .log-line { margin: 2px 0; }
+        .log-error { color: #ff6b6b; }
+        .log-success { color: #00ff88; }
+        .metric { display: flex; justify-content: space-between; margin: 8px 0; padding: 5px 0; border-bottom: 1px solid #333; }
+        .metric-label { color: #00aaff; }
+        .metric-value { color: #00ff88; font-weight: bold; }
+        .full-width { grid-column: 1 / -1; }
+        .progress-bar {
+            background: #333;
+            height: 20px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00aaff);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ AM-TradingAgents Dev Loop</h1>
+
+        <div class="grid">
+            <!-- Status -->
+            <div class="card">
+                <h2>🔄 Loop Status</h2>
+                <div class="status progress" id="status">Initializing...</div>
+                <div class="metric">
+                    <span class="metric-label">Current Step:</span>
+                    <span class="metric-value" id="step">—</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Active Story:</span>
+                    <span class="metric-value" id="story">—</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Model:</span>
+                    <span class="metric-value">Qwen3.8-27B</span>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="card">
+                <h2>📊 Progress</h2>
+                <div class="metric">
+                    <span class="metric-label">Stories Done:</span>
+                    <span class="metric-value" id="done-count">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Total Stories:</span>
+                    <span class="metric-value">20</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 5%;">
+                        1/20
+                    </div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">PRs Created:</span>
+                    <span class="metric-value" id="pr-count">1</span>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card full-width">
+                <h2>📝 Recent Activity</h2>
+                <div id="recent-activity">
+                    <div class="story-item">
+                        <span class="metric-value">✅ US-INFRA-0001</span> — Repository structure & CI skeleton
+                        <br><a class="pr-link" href="https://github.com/orisonsoto/AM-TradingAgents/pull/22" target="_blank">PR #22</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Log -->
+            <div class="card full-width">
+                <h2>🖥️ Live Log</h2>
+                <div class="log" id="log">
+                    <div class="log-line">[00:00] Orchestrator initialized</div>
+                    <div class="log-line log-success">[00:01] Health check: SLM reachable ✓</div>
+                    <div class="log-line">[00:02] Picked story: US-INFRA-0001</div>
+                    <div class="log-line">[00:03] Delegated to local model...</div>
+                    <div class="log-line log-success">[02:50] Implementation complete (16 files)</div>
+                    <div class="log-line">[02:51] Running validation tests...</div>
+                    <div class="log-line log-success">[03:10] All tests pass (30/30 ✓)</div>
+                    <div class="log-line log-success">[03:11] Architecture fitness: 10/10 ✓</div>
+                    <div class="log-line log-success">[03:12] PR created: #22</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const checkpointFile = '../../.orchestrator/execution-state.json';
+
+        function updateDashboard() {
+            fetch('status.json?t=' + Date.now())
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('status').textContent = '🟢 ' + data.status;
+                    document.getElementById('step').textContent = data.current_step + ' / 10';
+                    document.getElementById('story').textContent = data.active_story || '—';
+                    document.getElementById('done-count').textContent = data.done_count;
+                    document.getElementById('pr-count').textContent = data.pr_count;
+
+                    const progress = (data.done_count / 20) * 100;
+                    const fill = document.getElementById('progress-fill');
+                    fill.style.width = progress + '%';
+                    fill.textContent = data.done_count + '/20';
+                })
+                .catch(e => console.log('Waiting for updates...'));
+        }
+
+        // Update every 2 seconds
+        setInterval(updateDashboard, 2000);
+        updateDashboard();
+    </script>
+</body>
+</html>
