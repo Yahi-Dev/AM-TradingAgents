@@ -27,7 +27,56 @@ Real-time progress dashboard for Phase 0.5 Autonomous Development Loop.
 
 ## Start Dashboard
 
-### Option 1: Manual (Temporary)
+### ⭐ RECOMMENDED: Option 1 — Windows Service (Truly Persistent)
+
+**One-time setup** (requires Administrator):
+
+```powershell
+# Open PowerShell as Administrator, then:
+cd C:\Ia-projects\AM-TradingAgents\apps\web
+.\start-dashboard-service.ps1 -Action install
+```
+
+**Then:**
+- ✅ Dashboard auto-starts at Windows boot
+- ✅ Runs as a Windows Service
+- ✅ Auto-restarts if it crashes
+- ✅ No terminal window needed
+
+**Usage:**
+```powershell
+# Start service
+.\start-dashboard-service.ps1 -Action start
+
+# Stop service
+.\start-dashboard-service.ps1 -Action stop
+
+# Check status
+.\start-dashboard-service.ps1 -Action status
+
+# Uninstall (if needed)
+.\start-dashboard-service.ps1 -Action uninstall
+```
+
+---
+
+### Option 2: Windows Startup Folder (Simple Alternative)
+
+**One-time setup:**
+
+1. Copy `start-dashboard.bat` to Windows Startup folder:
+   ```
+   C:\Users\[YOUR-USERNAME]\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup
+   ```
+
+2. Dashboard will auto-start on next boot
+
+**Pros:** Simple, no PowerShell needed  
+**Cons:** Terminal window visible while running
+
+---
+
+### Option 3: Manual (Temporary — Current Session Only)
 ```bash
 cd C:\Ia-projects\AM-TradingAgents\apps\web
 python -m http.server 8888 --bind 127.0.0.1
@@ -35,26 +84,7 @@ python -m http.server 8888 --bind 127.0.0.1
 
 Then open: http://127.0.0.1:8888/dev-dashboard.html
 
-### Option 2: Persistent Script (Local Session)
-```powershell
-cd C:\Ia-projects\AM-TradingAgents\apps\web
-.\start-dashboard.ps1
-```
-
-Keeps server running + auto-restarts if it crashes
-
-### Option 3: Windows Task Scheduler (Survives Reboot)
-```powershell
-cd C:\Ia-projects\AM-TradingAgents\apps\web
-.\start-dashboard.ps1 -Install
-```
-
-Creates `AM-TradingAgents-Dashboard` scheduled task
-- Runs at system startup
-- Runs as SYSTEM user
-- Auto-restarts on crash
-
-**Then check:** Start → Task Scheduler → Scheduled Tasks → `AM-TradingAgents-Dashboard`
+**Will stop when you close the terminal or restart Windows.**
 
 ---
 
