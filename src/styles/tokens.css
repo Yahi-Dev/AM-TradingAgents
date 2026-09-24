@@ -1,0 +1,33 @@
+:root {
+  /* Base */
+  --bg-0: #0A0B0D;
+  --bg-1: #111318;
+  --bg-2: #181B22;
+
+  /* Brand */
+  --amber: #F59E0B;
+  --amber-soft: #F59E0B33;
+
+  /* Accents */
+  --teal: #14B8A6;
+  --teal-soft: #14B8A633;
+
+  --green: #22C55E;
+  --green-soft: #22C55E33;
+
+  --rose: #F43F5E;
+  --rose-soft: #F43F5E33;
+
+  /* Text */
+  --text-0: #F8FAFC;
+  --text-1: #94A3B8;
+  --text-2: #64748B;
+
+  /* Typography */
+  --font-ui: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Layout */
+  --rail-width: 72px;
+  --topbar-height: 64px;
+}

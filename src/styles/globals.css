@@ -1,0 +1,50 @@
+:root {
+  /* ── Design Tokens ────────────────────────────────────────────── */
+  --bg-0: #0A0B0D;
+  --bg-1: #111318;
+  --bg-2: #181B22;
+
+  --amber: #F59E0B;
+  --amber-soft: #F59E0B33;
+
+  --teal: #14B8A6;
+  --teal-soft: #14B8A633;
+
+  --green: #22C55E;
+  --green-soft: #22C55E33;
+
+  --rose: #F43F5E;
+  --rose-soft: #F43F5E33;
+
+  --text-0: #F1F5F9;
+  --text-1: #94A3B8;
+  --text-2: #64748B;
+
+  --font-ui: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  --rail-width: 72px;
+  --topbar-height: 64px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+#root,
+#__next {
+  min-height: 100vh;
+}

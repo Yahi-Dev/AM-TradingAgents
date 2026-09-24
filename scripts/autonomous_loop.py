@@ -108,15 +108,15 @@ def close_issue(issue):
 def mark_story_blocked(story_id):
     """Update stories.yaml to mark story as BLOCKED_AUTOMATION."""
     try:
-        with open(STORIES_YAML) as f:
+        with open(STORIES_YAML, encoding='utf-8') as f:
             data = yaml.safe_load(f)
 
         if story_id in data.get("stories", {}):
             data["stories"][story_id]["status"] = "BLOCKED_AUTOMATION"
 
-            with open(STORIES_YAML, 'w') as f:
-                yaml.dump(data, f, default_flow_style=False, sort_keys=False)
-            print(f"[BLOCKED] Updated stories.yaml: {story_id} → BLOCKED_AUTOMATION")
+            with open(STORIES_YAML, 'w', encoding='utf-8') as f:
+                yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+            print(f"[BLOCKED] Updated stories.yaml: {story_id} -> BLOCKED_AUTOMATION")
     except Exception as e:
         print(f"[WARN] Could not update stories.yaml: {e}", file=sys.stderr)
 

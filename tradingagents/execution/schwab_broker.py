@@ -25,8 +25,6 @@ from .broker_base import (
     BrokerAccount,
     OrderRequest,
     OrderResult,
-    OrderSide,
-    OrderType,
     TradingMode,
 )
 

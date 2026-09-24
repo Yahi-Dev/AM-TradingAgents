@@ -1,0 +1,57 @@
+/* ============================================================
+   AM-TradingAgents — Design Tokens (US-UI-0001)
+   AC-03: CSS variables for the design system
+   AC-04: Dark mode only; --bg-0 = #0A0B0D
+   ============================================================ */
+
+:root {
+  /* ── Backgrounds ─────────────────────────────────────────── */
+  --bg-0: #0A0B0D;
+  --bg-1: #111318;
+  --bg-2: #181B22;
+  --bg-3: #1F232B;
+
+  /* ── Brand / Accent ──────────────────────────────────────── */
+  --amber: #F59E0B;
+  --amber-soft: #F59E0B33;
+  --teal: #14B8A6;
+  --teal-soft: #14B8A633;
+  --green: #22C55E;
+  --green-soft: #22C55E33;
+  --rose: #F43F5E;
+  --rose-soft: #F43F5E33;
+
+  /* ── Text ─────────────────────────────────────────────────── */
+  --text-0: #F1F5F9;
+  --text-1: #94A3B8;
+  --text-2: #64748B;
+
+  /* ── Borders ─────────────────────────────────────────────── */
+  --border: #2A2E37;
+  --border-active: #3B4150;
+
+  /* ── Typography ───────────────────────────────────────────── */
+  --font-ui: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+
+  /* ── Spacing ──────────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* ── Layout constants ─────────────────────────────────────── */
+  --rail-width: 72px;
+  --topbar-height: 64px;
+
+  /* ── Radii ────────────────────────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* ── Transitions ──────────────────────────────────────────── */
+  --transition-fast: 120ms ease;
+  --transition-med: 200ms ease;
+}
