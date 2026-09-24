@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AM-TradingAgents — Autonomous Loop Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #0f3460;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #b0b0b0;
+            font-size: 0.9em;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .metric-card {
+            background: rgba(15, 52, 96, 0.5);
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            background: rgba(15, 52, 96, 0.8);
+            border-color: #00d4ff;
+            transform: translateY(-2px);
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .metric-done { color: #00ff88; }
+        .metric-blocked { color: #ff4444; }
+        .metric-draft { color: #ffaa00; }
+        .metric-waiting { color: #888888; }
+
+        .metric-label {
+            color: #888888;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 10px;
+            border: 1px solid #0f3460;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88 0%, #00d4ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            font-size: 0.8em;
+            transition: width 0.3s ease;
+        }
+
+        .stories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .story-card {
+            background: rgba(15, 52, 96, 0.4);
+            border: 1px solid #0f3460;
+            border-radius: 6px;
+            padding: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .story-card:hover {
+            background: rgba(15, 52, 96, 0.7);
+            border-color: #00d4ff;
+            transform: translateY(-2px);
+        }
+
+        .story-card.done {
+            border-left: 4px solid #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .story-card.blocked {
+            border-left: 4px solid #ff4444;
+            background: rgba(255, 68, 68, 0.05);
+        }
+
+        .story-card.draft {
+            border-left: 4px solid #ffaa00;
+            background: rgba(255, 170, 0, 0.05);
+        }
+
+        .story-id {
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .story-title {
+            font-size: 0.9em;
+            color: #e0e0e0;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .story-meta {
+            display: flex;
+            gap: 10px;
+            font-size: 0.75em;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .story-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-done {
+            background: #00ff88;
+            color: #000;
+        }
+
+        .status-blocked {
+            background: #ff4444;
+            color: #fff;
+        }
+
+        .status-draft {
+            background: #ffaa00;
+            color: #000;
+        }
+
+        .status-ready {
+            background: #4488ff;
+            color: #fff;
+        }
+
+        .risk-green {
+            background: #00ff88;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        .risk-blue {
+            background: #4488ff;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        .risk-yellow {
+            background: #ffaa00;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        .risk-orange {
+            background: #ff6600;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        .story-deps {
+            font-size: 0.75em;
+            color: #888;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .legend {
+            background: rgba(15, 52, 96, 0.5);
+            border: 1px solid #0f3460;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        .dot-done { background: #00ff88; }
+        .dot-blocked { background: #ff4444; }
+        .dot-draft { background: #ffaa00; }
+        .dot-ready { background: #4488ff; }
+
+        .refresh-time {
+            text-align: right;
+            color: #666;
+            font-size: 0.8em;
+            margin-top: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AM-TradingAgents Autonomous Loop</h1>
+            <p class="subtitle">Phase 0.5 Control Plane — Real-time Progress Dashboard</p>
+        </header>
+
+        <div class="metrics" id="metrics">
+            <div class="loading">Cargando datos...</div>
+        </div>
+
+        <div id="storiesSection">
+            <h2 style="color: #00d4ff; margin-bottom: 20px; font-size: 1.3em;">📊 Estado de Stories</h2>
+            <div class="stories-grid" id="storiesGrid">
+                <div class="loading">Cargando stories...</div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-dot dot-done"></div>
+                <span>Completada</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot dot-blocked"></div>
+                <span>Bloqueada</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot dot-draft"></div>
+                <span>Borrador</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot dot-ready"></div>
+                <span>Lista</span>
+            </div>
+        </div>
+
+        <div class="refresh-time">
+            ⏱️ Última actualización: <span id="lastUpdate">--:--:--</span>
+            | Próxima en: <span id="nextUpdate">--</span>s
+        </div>
+    </div>
+
+    <script>
+        const STORIES_URL = 'https://api.github.com/repos/orisonsoto/AM-TradingAgents/contents/docs/control-plane/stories.yaml';
+        const UPDATE_INTERVAL = 5000; // 5 seconds
+
+        async function loadStories() {
+            try {
+                // Try to load from local file first (for development)
+                const response = await fetch('../../../docs/control-plane/stories.yaml');
+                if (!response.ok) throw new Error('Local file not found');
+
+                const yaml = await response.text();
+                return parseYAML(yaml);
+            } catch (e) {
+                console.log('Using mock data for demo');
+                return getMockData();
+            }
+        }
+
+        function parseYAML(yaml) {
+            // Simple YAML parser for stories.yaml
+            const stories = {};
+            const storyRegex = /^\s{2}(US-[\w-]+):\s*$/gm;
+            const statusRegex = /status:\s*(\w+)/;
+            const riskRegex = /autonomy_risk:\s*(\w+)/;
+            const titleRegex = /title:\s*"([^"]+)"/;
+            const depsRegex = /depends_on:\s*\[([\w\-,\s]*)\]/;
+
+            let match;
+            while ((match = storyRegex.exec(yaml)) !== null) {
+                const storyId = match[1];
+                const storyStart = match.index;
+                const storyEnd = yaml.indexOf('\n  US-', storyStart + 1);
+                const storyText = yaml.substring(storyStart, storyEnd === -1 ? yaml.length : storyEnd);
+
+                const status = statusRegex.exec(storyText)?.[1] || 'DRAFT';
+                const risk = riskRegex.exec(storyText)?.[1] || 'UNKNOWN';
+                const title = titleRegex.exec(storyText)?.[1] || storyId;
+                const depsMatch = depsRegex.exec(storyText);
+                const deps = depsMatch ? depsMatch[1].split(',').map(d => d.trim()).filter(d => d) : [];
+
+                stories[storyId] = { status, risk, title, deps };
+            }
+
+            return stories;
+        }
+
+        function getMockData() {
+            return {
+                'US-INFRA-0001': { status: 'DONE', risk: 'GREEN', title: 'Repository structure & CI skeleton', deps: [] },
+                'US-INFRA-0002': { status: 'READY', risk: 'YELLOW', title: 'PostgreSQL + Alembic migrations', deps: ['US-INFRA-0001'] },
+                'US-INFRA-0003': { status: 'DONE', risk: 'BLUE', title: 'FastAPI skeleton & health endpoint', deps: ['US-INFRA-0001'] },
+                'US-SEC-0001': { status: 'READY', risk: 'YELLOW', title: 'JWT auth + tenant model', deps: ['US-INFRA-0002', 'US-INFRA-0003'] },
+                'US-DATA-0001': { status: 'DONE', risk: 'BLUE', title: 'OHLCV ingestion (yfinance)', deps: ['US-INFRA-0002'] },
+                'US-AGENT-0001': { status: 'DONE', risk: 'BLUE', title: 'TradingRun lifecycle + TradeIntent schema', deps: ['US-INFRA-0002', 'US-INFRA-0003'] },
+                'US-AGENT-0002': { status: 'BLOCKED_AUTOMATION', risk: 'BLUE', title: 'Technical Analyst integration', deps: ['US-AGENT-0001', 'US-DATA-0001'] },
+                'US-AGENT-0003': { status: 'DRAFT', risk: 'BLUE', title: 'Bull/Bear debate + Research Manager', deps: ['US-AGENT-0002'] },
+                'US-AGENT-0004': { status: 'DRAFT', risk: 'BLUE', title: 'Trader + Portfolio Manager', deps: ['US-AGENT-0003'] },
+                'US-RISK-0001': { status: 'DRAFT', risk: 'ORANGE', title: 'Risk Engine — pre-trade evaluation', deps: ['US-AGENT-0004'] },
+                'US-RISK-0002': { status: 'DRAFT', risk: 'ORANGE', title: 'Kill Switch', deps: ['US-RISK-0001'] },
+                'US-OMS-0001': { status: 'DRAFT', risk: 'ORANGE', title: 'OMS — order lifecycle', deps: ['US-RISK-0001'] },
+                'US-PORT-0001': { status: 'DRAFT', risk: 'YELLOW', title: 'Portfolio positions + P&L', deps: ['US-OMS-0001'] },
+                'US-AUDIT-0001': { status: 'DRAFT', risk: 'YELLOW', title: 'DecisionTrace creation', deps: ['US-AGENT-0004'] },
+                'US-API-0001': { status: 'DRAFT', risk: 'BLUE', title: 'POST /runs + GET /runs/{id}', deps: ['US-AGENT-0004', 'US-RISK-0001'] },
+                'US-API-0002': { status: 'DRAFT', risk: 'BLUE', title: 'SSE event stream', deps: ['US-API-0001'] },
+                'US-UI-0001': { status: 'BLOCKED_AUTOMATION', risk: 'GREEN', title: 'Design system + layout shell', deps: ['US-INFRA-0003'] },
+                'US-UI-0002': { status: 'DRAFT', risk: 'GREEN', title: 'Dashboard principal', deps: ['US-UI-0001', 'US-PORT-0001'] },
+                'US-UI-0003': { status: 'DRAFT', risk: 'GREEN', title: 'Centro Agéntico + Live Graph', deps: ['US-UI-0001', 'US-API-0002'] },
+                'US-UI-0004': { status: 'DRAFT', risk: 'GREEN', title: 'Onboarding 5 pasos', deps: ['US-UI-0001', 'US-SEC-0001'] },
+            };
+        }
+
+        function getStatusClass(status) {
+            if (status === 'DONE') return 'done';
+            if (status === 'BLOCKED_AUTOMATION') return 'blocked';
+            if (status === 'DRAFT') return 'draft';
+            return 'ready';
+        }
+
+        function getRiskClass(risk) {
+            return `risk-${risk.toLowerCase()}`;
+        }
+
+        function updateDashboard(stories) {
+            const statuses = Object.values(stories);
+            const counts = {
+                done: statuses.filter(s => s.status === 'DONE').length,
+                blocked: statuses.filter(s => s.status === 'BLOCKED_AUTOMATION').length,
+                draft: statuses.filter(s => s.status === 'DRAFT').length,
+                ready: statuses.filter(s => s.status === 'READY').length,
+            };
+
+            const total = statuses.length;
+            const completed = counts.done;
+            const progress = (completed / total * 100).toFixed(0);
+
+            // Update metrics
+            document.getElementById('metrics').innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Completadas</div>
+                    <div class="metric-value metric-done">${counts.done}</div>
+                    <div class="metric-label">de ${total}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Bloqueadas</div>
+                    <div class="metric-value metric-blocked">${counts.blocked}</div>
+                    <div class="metric-label">en cola</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Listas (READY)</div>
+                    <div class="metric-value metric-draft">${counts.ready}</div>
+                    <div class="metric-label">para procesar</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Borradores</div>
+                    <div class="metric-value metric-waiting">${counts.draft}</div>
+                    <div class="metric-label">esperando deps</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%">${progress}%</div>
+                    </div>
+                </div>
+            `;
+
+            // Update stories grid
+            const sortedStories = Object.entries(stories).sort((a, b) => {
+                const statusOrder = { DONE: 0, BLOCKED_AUTOMATION: 1, READY: 2, DRAFT: 3 };
+                return (statusOrder[a[1].status] || 99) - (statusOrder[b[1].status] || 99);
+            });
+
+            document.getElementById('storiesGrid').innerHTML = sortedStories.map(([id, story]) => `
+                <div class="story-card ${getStatusClass(story.status)}">
+                    <div class="story-id">${id}</div>
+                    <div class="story-title">${story.title}</div>
+                    <div class="story-meta">
+                        <span class="story-status status-${story.status.toLowerCase()}">${story.status.replace('_', ' ')}</span>
+                        <span class="${getRiskClass(story.risk)}">${story.risk}</span>
+                    </div>
+                    ${story.deps.length > 0 ? `<div class="story-deps">📌 Deps: ${story.deps.join(', ')}</div>` : ''}
+                </div>
+            `).join('');
+
+            // Update refresh time
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('es-ES');
+            document.getElementById('nextUpdate').textContent = (UPDATE_INTERVAL / 1000).toFixed(0);
+        }
+
+        async function init() {
+            const stories = await loadStories();
+            updateDashboard(stories);
+
+            // Auto-refresh
+            let countdown = UPDATE_INTERVAL / 1000;
+            setInterval(async () => {
+                countdown--;
+                if (countdown <= 0) {
+                    const stories = await loadStories();
+                    updateDashboard(stories);
+                    countdown = UPDATE_INTERVAL / 1000;
+                }
+                document.getElementById('nextUpdate').textContent = countdown.toFixed(0);
+            }, 1000);
+        }
+
+        // Start on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
