@@ -1,0 +1,156 @@
+# AM-TradingAgents — Retry & Failure Policy
+# Defines deterministic retry behavior for the autonomous development orchestrator.
+# Never solve validation failures by weakening the validation.
+# Schema version: 1.0
+
+schema_version: "1.0"
+
+# ---------------------------------------------------------------------------
+# GLOBAL DEFAULTS
+# ---------------------------------------------------------------------------
+defaults:
+  max_repair_attempts: 3
+  fix_loop_timeout_seconds: 900
+  between_attempts_pause_seconds: 5
+
+# ---------------------------------------------------------------------------
+# ATTEMPT STRATEGY
+# Each attempt has a different strategy to maximize fix success.
+# ---------------------------------------------------------------------------
+attempt_strategy:
+
+  attempt_1:
+    label: "Standard correction"
+    description: >
+      Send CI failure output verbatim to the local model with build_fix_prompt.
+      The model sees the exact error and corrects only the affected files.
+    allowed_scope: "same files that were written"
+    model: story_implementer
+    allowed_actions:
+      - edit_existing_files
+      - add_new_files_if_missing
+    forbidden_actions:
+      - weaken_tests
+      - skip_checks
+      - change_architecture
+    output: "FILE: blocks for corrected files only"
+
+  attempt_2:
+    label: "Alternative diagnosis"
+    description: >
+      Re-read the story contract and the failing output together.
+      Ask the model to diagnose the root cause before writing fixes.
+      May touch a wider set of files if the error is structural.
+    allowed_scope: "allowed_modules from story contract"
+    model: story_implementer
+    allowed_actions:
+      - edit_existing_files
+      - add_new_files_if_missing
+      - restructure_within_allowed_modules
+    forbidden_actions:
+      - weaken_tests
+      - skip_checks
+      - change_architecture
+      - touch_protected_modules
+    output: "Brief diagnosis (1-3 lines), then FILE: blocks"
+
+  attempt_3:
+    label: "Root-cause review"
+    description: >
+      Orchestrator (Claude Sonnet) reads the failure, the story contract,
+      and the generated files. It diagnoses the root cause and writes
+      a targeted fix prompt for the local model.
+      If the issue is an architecture violation, escalate — do NOT fix by
+      changing the architecture check.
+    allowed_scope: "allowed_modules from story contract"
+    model: orchestrator_diagnoses_then_story_implementer_fixes
+    allowed_actions:
+      - edit_existing_files
+      - add_new_files_if_missing
+    forbidden_actions:
+      - weaken_tests
+      - disable_checks
+      - touch_protected_modules
+      - change_architecture_rules
+    output: "Orchestrator diagnosis note + local model FILE: blocks"
+
+# ---------------------------------------------------------------------------
+# TERMINAL STATES (after max attempts)
+# ---------------------------------------------------------------------------
+terminal_state:
+  status: BLOCKED_AUTOMATION
+  actions:
+    - "Write checkpoint with blocking_reason and all failure evidence"
+    - "Post GitHub issue comment explaining blockage"
+    - "Do NOT push failing code"
+    - "Do NOT merge"
+    - "Notify orchestrator to skip this story and continue with next READY story"
+    - "Require human intervention to unblock"
+
+# ---------------------------------------------------------------------------
+# FAILURE TYPE CLASSIFICATION
+# Different failure types allow different max attempts.
+# ---------------------------------------------------------------------------
+failure_types:
+
+  ruff_lint:
+    description: "Lint/formatting error"
+    max_attempts: 3
+    auto_fixable: true
+    notes: "Lint failures are usually trivially fixable — 3 attempts is generous"
+
+  mypy_type_error:
+    description: "Type checking failure"
+    max_attempts: 3
+    auto_fixable: true
+
+  pytest_failure:
+    description: "Unit test failure"
+    max_attempts: 3
+    auto_fixable: true
+    notes: "Never fix by deleting or weakening the test"
+
+  architecture_violation:
+    description: "Forbidden import detected by fitness function"
+    max_attempts: 1
+    auto_fixable: true
+    escalation: "If the violation is in risk/engine or agents→broker, escalate to orchestrator review before any fix attempt"
+    notes: "The fix must remove the forbidden import, not disable the check"
+
+  missing_tests:
+    description: "Required test file not generated"
+    max_attempts: 2
+    auto_fixable: true
+    notes: "Re-prompt with explicit requirement for missing test file"
+
+  protected_module_modified:
+    description: "Local model wrote files to a protected module"
+    max_attempts: 0
+    auto_fixable: false
+    escalation: "Immediate BLOCKED_AUTOMATION — do not proceed"
+    notes: "This is a scope violation, not a fixable CI error"
+
+  secret_in_output:
+    description: "A credential, token, or password detected in generated code"
+    max_attempts: 0
+    auto_fixable: false
+    escalation: "Immediate BLOCKED_AUTOMATION — do NOT commit, do NOT push"
+    notes: "Human must review and sanitize before any further action"
+
+  red_classification_attempt:
+    description: "Story or fix involves RED-classified changes"
+    max_attempts: 0
+    auto_fixable: false
+    escalation: "Immediate BLOCKED_AUTOMATION — refuse and explain"
+
+# ---------------------------------------------------------------------------
+# INVARIANTS — never violate regardless of attempt count
+# ---------------------------------------------------------------------------
+invariants:
+  - "Never weaken a test to make it pass"
+  - "Never disable a lint or type-check rule in config to pass CI"
+  - "Never use --no-verify on git operations"
+  - "Never push to main directly"
+  - "Never modify architecture fitness functions to allow a violation"
+  - "Evidence of all failures must be preserved in checkpoint before retry"
+  - "A story blocked at attempt_3 requires human decision before retry is allowed"

@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://am-tradingagents/schemas/story-contract/v1",
+  "title": "StoryExecutionContract",
+  "description": "Formal contract for a single story execution. Loaded by the orchestrator before delegating to the local SLM.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "story_id",
+    "requirement_ids",
+    "epic",
+    "feature",
+    "capability",
+    "depends_on",
+    "objective",
+    "scope",
+    "out_of_scope",
+    "allowed_modules",
+    "protected_modules",
+    "acceptance_criteria",
+    "required_tests",
+    "architecture_rules",
+    "security_requirements",
+    "observability_requirements",
+    "migration_impact",
+    "definition_of_done",
+    "risk_classification",
+    "merge_policy"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Contract schema version",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "story_id": {
+      "type": "string",
+      "description": "Canonical story identifier",
+      "pattern": "^US-[A-Z]+-\\d{4}$",
+      "examples": ["US-INFRA-0001", "US-RISK-0001"]
+    },
+    "requirement_ids": {
+      "type": "array",
+      "description": "Functional requirement IDs this story satisfies",
+      "items": {
+        "type": "string",
+        "pattern": "^REQ-(FUNC|NFR)-\\d{4}$"
+      },
+      "minItems": 1
+    },
+    "epic": {
+      "type": "string",
+      "pattern": "^EPIC-[A-Z]+-\\d{3}$"
+    },
+    "feature": {
+      "type": "string",
+      "description": "Short feature name within the epic"
+    },
+    "capability": {
+      "type": "string",
+      "pattern": "^CAP-[A-Z]+-\\d{3}$"
+    },
+    "depends_on": {
+      "type": "array",
+      "description": "Story IDs that must be DONE before this story may start",
+      "items": {
+        "type": "string",
+        "pattern": "^US-[A-Z]+-\\d{4}$"
+      }
+    },
+    "objective": {
+      "type": "string",
+      "description": "One-sentence outcome this story delivers",
+      "minLength": 10,
+      "maxLength": 300
+    },
+    "scope": {
+      "type": "array",
+      "description": "Explicit list of what IS in scope",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "out_of_scope": {
+      "type": "array",
+      "description": "Explicit list of what is NOT in scope (prevents scope creep)",
+      "items": { "type": "string" }
+    },
+    "allowed_modules": {
+      "type": "array",
+      "description": "Module paths/prefixes the implementation may touch",
+      "items": { "type": "string" }
+    },
+    "protected_modules": {
+      "type": "array",
+      "description": "Module paths that must NOT be modified by this story",
+      "items": { "type": "string" }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "description": "GIVEN/WHEN/THEN acceptance criteria",
+      "items": {
+        "type": "object",
+        "required": ["id", "given", "when", "then"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^AC-\\d+$" },
+          "given": { "type": "string" },
+          "when": { "type": "string" },
+          "then": { "type": "string" }
+        }
+      },
+      "minItems": 1
+    },
+    "required_tests": {
+      "type": "array",
+      "description": "Test file paths that must exist and pass",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "architecture_rules": {
+      "type": "array",
+      "description": "Architecture invariants that apply to this story",
+      "items": {
+        "type": "object",
+        "required": ["rule", "check"],
+        "properties": {
+          "rule": { "type": "string" },
+          "check": {
+            "type": "string",
+            "enum": ["import_forbidden", "import_required", "no_direct_call", "abstract_only"]
+          },
+          "source_module": { "type": "string" },
+          "forbidden_import": { "type": "string" }
+        }
+      }
+    },
+    "security_requirements": {
+      "type": "array",
+      "description": "Security constraints specific to this story",
+      "items": {
+        "type": "object",
+        "required": ["requirement"],
+        "properties": {
+          "requirement": { "type": "string" },
+          "ref": { "type": "string", "description": "REQ-SEC or NFR-SEC reference" }
+        }
+      }
+    },
+    "observability_requirements": {
+      "type": "array",
+      "description": "Metrics, logs, or traces this story must emit",
+      "items": { "type": "string" }
+    },
+    "migration_impact": {
+      "type": "string",
+      "enum": ["none", "additive", "destructive", "data_backfill"],
+      "description": "Database migration impact level"
+    },
+    "rollback_plan": {
+      "type": "string",
+      "description": "How to safely revert this story if needed. Required for YELLOW+ risk."
+    },
+    "definition_of_done": {
+      "type": "array",
+      "description": "Checklist that must all be true before DONE",
+      "items": {
+        "type": "object",
+        "required": ["criterion"],
+        "properties": {
+          "criterion": { "type": "string" },
+          "automated": { "type": "boolean", "default": false }
+        }
+      },
+      "minItems": 3
+    },
+    "risk_classification": {
+      "type": "string",
+      "enum": ["GREEN", "BLUE", "YELLOW", "ORANGE", "RED"],
+      "description": "Autonomy risk level. See docs/control-plane/autonomy-risk-levels.yaml"
+    },
+    "merge_policy": {
+      "type": "object",
+      "required": ["auto_merge_allowed", "human_approval_required"],
+      "properties": {
+        "auto_merge_allowed": { "type": "boolean" },
+        "human_approval_required": { "type": "boolean" },
+        "reviewer_agent_required": { "type": "boolean", "default": true },
+        "required_approvals": { "type": "integer", "minimum": 0, "default": 1 }
+      }
+    },
+    "domain_events": {
+      "type": "array",
+      "description": "Domain events this story introduces or modifies",
+      "items": { "type": "string" }
+    },
+    "github_issue": {
+      "type": "integer",
+      "description": "GitHub issue number"
+    }
+  },
+  "additionalProperties": false
+}

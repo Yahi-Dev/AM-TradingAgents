@@ -1,0 +1,123 @@
+# Component Ownership & Concurrency Control
+# Defines bounded-context ownership and rules for future parallel agent execution.
+# Schema version: 1.0
+
+schema_version: "1.0"
+
+# ---------------------------------------------------------------------------
+# POLICY
+# ---------------------------------------------------------------------------
+policy:
+  default_mode: sequential
+  description: >
+    By default, only one story is implemented at a time.
+    Parallel execution is allowed only between stories with NO shared
+    bounded context AND no dependency relationship.
+    Two agents must never write to the same bounded context simultaneously.
+
+# ---------------------------------------------------------------------------
+# BOUNDED CONTEXTS
+# Each context owns specific module paths.
+# Only one active story may modify a context at a time.
+# ---------------------------------------------------------------------------
+bounded_contexts:
+
+  infra:
+    owner_epic: EPIC-INFRA-001
+    modules:
+      - pyproject.toml
+      - alembic/
+      - tradingagents/db/
+      - .github/workflows/
+      - Makefile
+    stories: [US-INFRA-0001, US-INFRA-0002, US-INFRA-0003]
+    notes: "All infra stories are sequential (each depends on previous)"
+
+  auth:
+    owner_epic: EPIC-INFRA-001
+    modules:
+      - tradingagents/auth/
+      - apps/api/auth/
+    stories: [US-SEC-0001]
+
+  data_ingestion:
+    owner_epic: EPIC-DATA-001
+    modules:
+      - tradingagents/dataflows/
+    stories: [US-DATA-0001]
+    notes: "Independent of agents — can run in parallel with US-INFRA-0003"
+
+  agents:
+    owner_epic: EPIC-AGENT-001
+    modules:
+      - tradingagents/agents/
+      - tradingagents/domain/
+    stories: [US-AGENT-0001, US-AGENT-0002, US-AGENT-0003, US-AGENT-0004]
+    notes: "Sequential — each story depends on previous"
+
+  risk_engine:
+    owner_epic: EPIC-RISK-001
+    modules:
+      - tradingagents/risk/
+    stories: [US-RISK-0001, US-RISK-0002]
+    protection: ORANGE
+    notes: "Highest protection — never allow parallel writes to this context"
+
+  oms:
+    owner_epic: EPIC-OMS-001
+    modules:
+      - tradingagents/oms/
+      - tradingagents/execution/
+    stories: [US-OMS-0001]
+    protection: ORANGE
+
+  portfolio:
+    owner_epic: EPIC-PORT-001
+    modules:
+      - tradingagents/portfolio/
+    stories: [US-PORT-0001]
+
+  audit:
+    owner_epic: EPIC-AUDIT-001
+    modules:
+      - tradingagents/audit/
+    stories: [US-AUDIT-0001]
+
+  api:
+    owner_epic: EPIC-API-001
+    modules:
+      - apps/api/
+      - tradingagents/api/
+    stories: [US-API-0001, US-API-0002]
+
+  frontend:
+    owner_epic: EPIC-UI-001
+    modules:
+      - apps/web/
+    stories: [US-UI-0001, US-UI-0002, US-UI-0003, US-UI-0004]
+    notes: "UI stories are partially parallelizable (US-UI-0002/0003/0004 share no modules)"
+
+# ---------------------------------------------------------------------------
+# COMPONENT LOCK PROTOCOL (for future parallel execution)
+# ---------------------------------------------------------------------------
+locking:
+  lock_storage: ".orchestrator/locks.json"
+  lock_schema:
+    context: string
+    locked_by_story: string
+    locked_by_execution_id: uuid
+    locked_at: datetime
+    expected_release: datetime
+  lock_timeout_seconds: 3600
+  deadlock_detection: true
+  on_conflict: "wait up to 60s, then BLOCKED_AUTOMATION"
+
+# ---------------------------------------------------------------------------
+# STORIES SAFE TO PARALLELIZE (for future use)
+# Only when both are READY and context sets do not overlap
+# ---------------------------------------------------------------------------
+parallelizable_pairs:
+  - [US-DATA-0001, US-INFRA-0003]
+  - [US-UI-0001, US-AGENT-0001]
+  - [US-UI-0002, US-UI-0003]   # only after US-UI-0001 done, different components
+  notes: "Do not enable until sequential mode is proven stable"

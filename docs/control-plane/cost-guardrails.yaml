@@ -1,0 +1,59 @@
+# AM-TradingAgents — Cost & Resource Guardrails
+# Controls for autonomous development loop resource consumption.
+# Schema version: 1.0
+
+schema_version: "1.0"
+
+# ---------------------------------------------------------------------------
+# PER-STORY LIMITS (defaults, overridable in stories.yaml per story)
+# ---------------------------------------------------------------------------
+per_story:
+  max_repair_attempts: 3
+  implementation_timeout_seconds: 600      # 10 min max per implementation call
+  fix_timeout_seconds: 300                 # 5 min per fix call
+  validation_timeout_seconds: 120          # 2 min per validation run
+  total_story_wall_time_seconds: 3600      # 1 hour max per story end-to-end
+
+# ---------------------------------------------------------------------------
+# PER-LOOP LIMITS (entire orchestrator session)
+# ---------------------------------------------------------------------------
+per_loop:
+  max_consecutive_blocked_stories: 3       # Stop if 3 in a row blocked
+  max_stories_per_session: 20              # Never exceed all 20 stories in one run
+  max_concurrent_coding_agents: 1          # Sequential only (no parallel story impl)
+  max_agent_delegation_depth: 2            # Orchestrator → Implementer only (no sub-sub-agents)
+
+# ---------------------------------------------------------------------------
+# TOKEN OBSERVABILITY
+# ---------------------------------------------------------------------------
+token_observability:
+  warning_threshold_per_story: 50000       # Log warning if exceeded
+  hard_limit_per_story: 150000             # Abort implementation if exceeded
+  total_session_soft_limit: 1000000        # Log warning
+  track_token_usage: true                  # Record in execution checkpoint
+
+# ---------------------------------------------------------------------------
+# TIMEOUT BEHAVIOR
+# ---------------------------------------------------------------------------
+timeout_behavior:
+  local_slm_timeout:
+    action: "count as attempt 1 failure, retry once"
+    max_retries: 1
+    on_second_timeout: "BLOCKED_AUTOMATION — SLM unreachable"
+  validation_timeout:
+    action: "report timeout as validation failure"
+    treated_as: pytest_failure
+  total_story_timeout:
+    action: "BLOCKED_AUTOMATION — story took too long"
+
+# ---------------------------------------------------------------------------
+# COST TRACKING (future — when token cost data is available)
+# ---------------------------------------------------------------------------
+cost_tracking:
+  enabled: false                           # Enable when billing API available
+  cost_per_1k_tokens:
+    story_implementer: 0.0                 # Local model — no cost per token
+    orchestrator: 0.003                    # Claude Sonnet estimate
+  budget_alert_threshold_usd: 10.0
+  budget_hard_limit_usd: 50.0
+  notes: "Do not optimize token use at the expense of code correctness"

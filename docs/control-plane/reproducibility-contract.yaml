@@ -1,0 +1,149 @@
+# AM-TradingAgents — Reproducibility Contract
+# Every significant agentic trading run must be traceable to its exact inputs.
+# This contract defines what must be recorded to reproduce any run exactly.
+# Schema version: 1.0
+
+schema_version: "1.0"
+
+# ---------------------------------------------------------------------------
+# TRADING RUN REPRODUCIBILITY RECORD
+# Persisted in DecisionTrace alongside each TradingRun.
+# ---------------------------------------------------------------------------
+trading_run_reproducibility:
+  description: >
+    Complete snapshot of all versioned inputs for a TradingRun.
+    Allows exact replay of any decision given the same data snapshot.
+
+  required_fields:
+
+    code_version:
+      type: string
+      description: "Git commit SHA of the codebase used"
+      example: "ef2e094a3f1b..."
+      required: true
+
+    configuration_version:
+      type: string
+      description: "Version from model-registry.yaml::configuration.configuration_version"
+      required: true
+
+    data_version:
+      type: object
+      description: "Data snapshot identifiers used in this run"
+      required: true
+      fields:
+        ohlcv_as_of:
+          type: datetime
+          description: "Latest bar timestamp in the OHLCV data used"
+        news_as_of:
+          type: datetime
+          description: "Latest timestamp of news data ingested"
+        fundamentals_as_of:
+          type: datetime
+          nullable: true
+
+    prompt_versions:
+      type: object
+      description: "prompt_id and version for every prompt invoked in the run"
+      required: true
+      example:
+        technical_analyst_prompt: "analyze_technical_v1:1.0.0"
+        research_manager_prompt: "research_manager_v1:1.0.0"
+        trader_prompt: "trader_decision_v1:1.0.0"
+
+    model_versions:
+      type: object
+      description: "Physical model IDs used for each role in the run"
+      required: true
+      example:
+        technical_analyst: "qwen3.8-27b"
+        orchestrator: "claude-sonnet-4-6"
+
+    strategy_version:
+      type: string
+      description: "Strategy configuration version (risk limits, position sizing params)"
+      required: true
+
+    database_schema_version:
+      type: string
+      description: "Alembic revision head at time of run"
+      required: true
+
+    tenant_id:
+      type: uuid
+      required: true
+
+    run_mode:
+      type: string
+      enum: [PAPER, BACKTEST, LIVE]
+      required: true
+
+  notes:
+    - "LIVE runs require all fields to be non-null"
+    - "BACKTEST runs must additionally record the replay date range"
+    - "Fields may be populated progressively during a run but must be complete at completion"
+
+# ---------------------------------------------------------------------------
+# DEVELOPMENT EXECUTION REPRODUCIBILITY
+# Recorded per story implementation for auditability.
+# ---------------------------------------------------------------------------
+dev_execution_reproducibility:
+  description: >
+    Captured per story execution. Allows understanding exactly why
+    the code was written the way it was.
+
+  required_fields:
+
+    story_id:
+      type: string
+
+    execution_id:
+      type: uuid
+
+    base_commit:
+      type: string
+      description: "Git SHA before any files were written"
+
+    result_commit:
+      type: string
+      description: "Git SHA of the story's final commit"
+
+    prompt_id:
+      type: string
+      description: "Prompt used for implementation (from model-registry.yaml)"
+
+    prompt_version:
+      type: string
+
+    model_physical_id:
+      type: string
+
+    model_version:
+      type: string
+
+    schema_version:
+      type: string
+      description: "story-contract.schema.json version"
+
+    architecture_rules_version:
+      type: string
+
+    configuration_version:
+      type: string
+
+    start_time:
+      type: datetime
+
+    end_time:
+      type: datetime
+
+    tokens_used:
+      type: integer
+      nullable: true
+
+    files_written:
+      type: array
+      items: string
+
+    repair_attempts:
+      type: integer

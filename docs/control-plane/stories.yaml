@@ -1,0 +1,690 @@
+# AM-TradingAgents — Canonical Machine-Readable Project State
+# Single source of truth for epics, features, stories, dependencies, status, risk.
+# Human docs in docs/11-user-stories/ remain authoritative for full contracts.
+# This file drives the orchestrator; it must stay in sync with GitHub Issues.
+#
+# MAINTENANCE: Update 'status' field here when a story changes state.
+# The orchestrator reads this file + GitHub issues to determine READY stories.
+# Do NOT manually duplicate status in multiple places.
+#
+# Schema version: 1.0
+schema_version: "1.0"
+last_updated: "2026-09-23"
+
+# ---------------------------------------------------------------------------
+# EPICS
+# ---------------------------------------------------------------------------
+epics:
+  EPIC-INFRA-001:
+    title: "Infraestructura Base"
+    description: "Repository structure, CI, database, API skeleton, frontend build"
+    phase: 1
+  EPIC-DATA-001:
+    title: "Ingesta de Datos de Mercado"
+    description: "OHLCV, fundamentals, news ingestion pipeline"
+    phase: 1
+  EPIC-AGENT-001:
+    title: "Motor Agéntico (TradingAgents Core)"
+    description: "LangGraph multi-agent pipeline from TradingRun to TradeIntent"
+    phase: 2
+  EPIC-RISK-001:
+    title: "Risk Engine Determinístico"
+    description: "Pre-trade / in-trade / post-trade / kill switch — no LLM dependency"
+    phase: 3
+  EPIC-OMS-001:
+    title: "Order Management System"
+    description: "Order lifecycle, PaperBroker, BrokerGateway abstraction"
+    phase: 3
+  EPIC-EXEC-001:
+    title: "Ejecución de Órdenes"
+    description: "BrokerGateway, SchwabBroker integration, LIVE guard"
+    phase: 5
+  EPIC-PORT-001:
+    title: "Gestión de Portafolio"
+    description: "Positions, P&L, portfolio state aggregation"
+    phase: 3
+  EPIC-API-001:
+    title: "API REST + SSE"
+    description: "FastAPI endpoints, SSE event stream, OpenAPI spec"
+    phase: 4
+  EPIC-UI-001:
+    title: "Frontend SaaS"
+    description: "React/Next.js dashboard, agentic graph visualization"
+    phase: 4
+  EPIC-OBS-001:
+    title: "Observabilidad"
+    description: "Metrics, tracing, structured logging, alerts"
+    phase: 6
+  EPIC-AUDIT-001:
+    title: "Auditoría y Trazabilidad"
+    description: "DecisionTrace, immutable audit log"
+    phase: 3
+  EPIC-LEARN-001:
+    title: "Aprendizaje y Feedback"
+    description: "Strategy evaluation, replay, controlled fine-tuning"
+    phase: 6
+  EPIC-DEVCTL-001:
+    title: "Development Control Center"
+    description: "Autonomous dev loop, CI orchestration, progress dashboard"
+    phase: 6
+
+# ---------------------------------------------------------------------------
+# STORIES — canonical state
+# ---------------------------------------------------------------------------
+# status values: DRAFT | REFINED | READY | IN_PROGRESS | PR_OPEN | IN_REVIEW |
+#                CI_FAILED | CI_PASSED | MERGED | VERIFIED | DONE | BLOCKED_AUTOMATION
+#
+# autonomy_risk: GREEN | BLUE | YELLOW | ORANGE | RED
+#   (see docs/control-plane/autonomy-risk-levels.yaml for full definitions)
+#
+# human_approval_required: true = must have explicit human sign-off before merge
+# auto_merge_allowed: true = orchestrator may merge after CI passes (GREEN only)
+# ---------------------------------------------------------------------------
+
+stories:
+
+  US-INFRA-0001:
+    title: "Repository structure & CI skeleton"
+    epic: EPIC-INFRA-001
+    capability: CAP-DEVCTL-001
+    github_issue: 2
+    status: READY
+    autonomy_risk: GREEN
+    human_approval_required: false
+    auto_merge_allowed: true
+    depends_on: []
+    allowed_modules:
+      - pyproject.toml
+      - setup.py
+      - .github/workflows/
+      - .gitignore
+      - Makefile
+      - docs/
+      - tests/
+    protected_modules: []
+    required_tests:
+      - tests/unit/test_infra_0001_ci_smoke.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+      - traceability
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-INFRA-0001"
+    pr_ref: PR-001
+    migration_impact: none
+
+  US-INFRA-0002:
+    title: "PostgreSQL + Alembic migrations"
+    epic: EPIC-INFRA-001
+    capability: CAP-DEVCTL-001
+    github_issue: 3
+    status: READY
+    autonomy_risk: YELLOW
+    human_approval_required: false
+    auto_merge_allowed: false
+    depends_on:
+      - US-INFRA-0001
+    allowed_modules:
+      - tradingagents/db/
+      - alembic/
+      - alembic.ini
+      - tests/unit/db/
+    protected_modules:
+      - tradingagents/execution/
+      - tradingagents/risk/engine/
+    required_tests:
+      - tests/unit/db/test_migrations.py
+      - tests/unit/db/test_connection.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+      - traceability
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-INFRA-0002"
+    pr_ref: PR-002
+    migration_impact: additive
+
+  US-INFRA-0003:
+    title: "FastAPI skeleton + health endpoint"
+    epic: EPIC-INFRA-001
+    capability: CAP-API-001
+    github_issue: 4
+    status: READY
+    autonomy_risk: BLUE
+    human_approval_required: false
+    auto_merge_allowed: false
+    depends_on:
+      - US-INFRA-0001
+    allowed_modules:
+      - apps/api/
+      - tradingagents/api/
+      - tests/unit/api/
+    protected_modules:
+      - tradingagents/execution/
+      - tradingagents/risk/engine/
+    required_tests:
+      - tests/unit/api/test_health.py
+      - tests/unit/api/test_infra_0003.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-INFRA-0003"
+    pr_ref: PR-003
+    migration_impact: none
+
+  US-SEC-0001:
+    title: "JWT auth + tenant model"
+    epic: EPIC-INFRA-001
+    capability: CAP-SEC-001
+    github_issue: 5
+    status: READY
+    autonomy_risk: YELLOW
+    human_approval_required: true
+    auto_merge_allowed: false
+    depends_on:
+      - US-INFRA-0002
+      - US-INFRA-0003
+    allowed_modules:
+      - tradingagents/auth/
+      - apps/api/auth/
+      - alembic/versions/
+      - tests/unit/auth/
+    protected_modules:
+      - tradingagents/execution/
+      - tradingagents/risk/engine/
+    required_tests:
+      - tests/unit/auth/test_jwt.py
+      - tests/unit/auth/test_tenant.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+      - security_scan
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-SEC-0001"
+    pr_ref: PR-004
+    migration_impact: additive
+
+  US-DATA-0001:
+    title: "OHLCV ingestion (yfinance)"
+    epic: EPIC-DATA-001
+    capability: CAP-DATA-001
+    github_issue: 6
+    status: READY
+    autonomy_risk: BLUE
+    human_approval_required: false
+    auto_merge_allowed: false
+    depends_on:
+      - US-INFRA-0002
+    allowed_modules:
+      - tradingagents/dataflows/
+      - tradingagents/db/models/
+      - alembic/versions/
+      - tests/unit/dataflows/
+    protected_modules:
+      - tradingagents/execution/
+      - tradingagents/risk/engine/
+      - tradingagents/agents/
+    required_tests:
+      - tests/unit/dataflows/test_ohlcv.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-DATA-0001"
+    pr_ref: PR-005
+    migration_impact: additive
+
+  US-AGENT-0001:
+    title: "TradingRun lifecycle + TradeIntent schema"
+    epic: EPIC-AGENT-001
+    capability: CAP-AGENT-001
+    github_issue: 7
+    status: READY
+    autonomy_risk: BLUE
+    human_approval_required: false
+    auto_merge_allowed: false
+    depends_on:
+      - US-INFRA-0002
+      - US-INFRA-0003
+    allowed_modules:
+      - tradingagents/agents/
+      - tradingagents/domain/
+      - alembic/versions/
+      - tests/unit/agents/
+    protected_modules:
+      - tradingagents/execution/
+      - tradingagents/risk/engine/
+      - tradingagents/oms/
+    required_tests:
+      - tests/unit/agents/test_trading_run.py
+      - tests/unit/agents/test_trade_intent.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+      - traceability
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-AGENT-0001"
+    pr_ref: PR-006
+    migration_impact: additive
+
+  US-AGENT-0002:
+    title: "Technical Analyst integration"
+    epic: EPIC-AGENT-001
+    capability: CAP-AGENT-001
+    github_issue: 8
+    status: DRAFT
+    autonomy_risk: BLUE
+    human_approval_required: false
+    auto_merge_allowed: false
+    depends_on:
+      - US-AGENT-0001
+      - US-DATA-0001
+    allowed_modules:
+      - tradingagents/agents/analysts/
+      - tradingagents/agents/utils/
+      - tests/unit/agents/
+    protected_modules:
+      - tradingagents/execution/
+      - tradingagents/risk/engine/
+      - tradingagents/oms/
+    required_tests:
+      - tests/unit/agents/test_technical_analyst.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-AGENT-0002"
+    pr_ref: PR-007
+    migration_impact: none
+
+  US-AGENT-0003:
+    title: "Bull/Bear debate + Research Manager"
+    epic: EPIC-AGENT-001
+    capability: CAP-AGENT-001
+    github_issue: 9
+    status: DRAFT
+    autonomy_risk: BLUE
+    human_approval_required: false
+    auto_merge_allowed: false
+    depends_on:
+      - US-AGENT-0002
+    allowed_modules:
+      - tradingagents/agents/
+      - tests/unit/agents/
+    protected_modules:
+      - tradingagents/execution/
+      - tradingagents/risk/engine/
+      - tradingagents/oms/
+    required_tests:
+      - tests/unit/agents/test_debate.py
+      - tests/unit/agents/test_research_manager.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-AGENT-0003"
+    pr_ref: null
+    migration_impact: none
+
+  US-AGENT-0004:
+    title: "Trader + Portfolio Manager → TradeIntent"
+    epic: EPIC-AGENT-001
+    capability: CAP-AGENT-001
+    github_issue: 10
+    status: DRAFT
+    autonomy_risk: BLUE
+    human_approval_required: false
+    auto_merge_allowed: false
+    depends_on:
+      - US-AGENT-0003
+    allowed_modules:
+      - tradingagents/agents/
+      - tradingagents/domain/
+      - tests/unit/agents/
+    protected_modules:
+      - tradingagents/execution/
+      - tradingagents/risk/engine/
+      - tradingagents/oms/
+    required_tests:
+      - tests/unit/agents/test_trader.py
+      - tests/unit/agents/test_trade_intent_invariant.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-AGENT-0004"
+    pr_ref: null
+    migration_impact: none
+
+  US-RISK-0001:
+    title: "Risk Engine — pre-trade evaluation"
+    epic: EPIC-RISK-001
+    capability: CAP-RISK-001
+    github_issue: 11
+    status: DRAFT
+    autonomy_risk: ORANGE
+    human_approval_required: true
+    auto_merge_allowed: false
+    depends_on:
+      - US-AGENT-0004
+    allowed_modules:
+      - tradingagents/risk/
+      - tradingagents/domain/
+      - tests/unit/risk/
+    protected_modules:
+      - tradingagents/execution/
+      - tradingagents/oms/
+      - tradingagents/agents/
+    required_tests:
+      - tests/unit/risk/test_engine_no_llm.py
+      - tests/unit/risk/test_pre_trade.py
+      - tests/unit/risk/test_risk_verdict.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+      - security_scan
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-RISK-0001"
+    pr_ref: PR-010
+    migration_impact: additive
+
+  US-RISK-0002:
+    title: "Kill Switch"
+    epic: EPIC-RISK-001
+    capability: CAP-RISK-001
+    github_issue: 12
+    status: DRAFT
+    autonomy_risk: ORANGE
+    human_approval_required: true
+    auto_merge_allowed: false
+    depends_on:
+      - US-RISK-0001
+    allowed_modules:
+      - tradingagents/risk/
+      - tests/unit/risk/
+    protected_modules:
+      - tradingagents/execution/
+      - tradingagents/oms/
+    required_tests:
+      - tests/unit/risk/test_kill_switch.py
+      - tests/unit/risk/test_kill_switch_blocks_intents.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+      - security_scan
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-RISK-0002"
+    pr_ref: null
+    migration_impact: none
+
+  US-OMS-0001:
+    title: "OMS — order lifecycle (PaperBroker)"
+    epic: EPIC-OMS-001
+    capability: CAP-OMS-001
+    github_issue: 13
+    status: DRAFT
+    autonomy_risk: ORANGE
+    human_approval_required: true
+    auto_merge_allowed: false
+    depends_on:
+      - US-RISK-0001
+    allowed_modules:
+      - tradingagents/oms/
+      - tradingagents/execution/
+      - tradingagents/domain/
+      - alembic/versions/
+      - tests/unit/oms/
+    protected_modules:
+      - tradingagents/agents/
+      - tradingagents/risk/engine/
+    required_tests:
+      - tests/unit/oms/test_order_lifecycle.py
+      - tests/unit/oms/test_paper_broker.py
+      - tests/unit/oms/test_risk_gate.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+      - security_scan
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-OMS-0001"
+    pr_ref: null
+    migration_impact: additive
+
+  US-PORT-0001:
+    title: "Portfolio positions + P&L"
+    epic: EPIC-PORT-001
+    capability: CAP-PORT-001
+    github_issue: 14
+    status: DRAFT
+    autonomy_risk: YELLOW
+    human_approval_required: false
+    auto_merge_allowed: false
+    depends_on:
+      - US-OMS-0001
+    allowed_modules:
+      - tradingagents/portfolio/
+      - tradingagents/domain/
+      - alembic/versions/
+      - tests/unit/portfolio/
+    protected_modules:
+      - tradingagents/execution/
+      - tradingagents/risk/engine/
+    required_tests:
+      - tests/unit/portfolio/test_positions.py
+      - tests/unit/portfolio/test_pnl.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-PORT-0001"
+    pr_ref: null
+    migration_impact: additive
+
+  US-AUDIT-0001:
+    title: "DecisionTrace creation"
+    epic: EPIC-AUDIT-001
+    capability: CAP-AUDIT-001
+    github_issue: 15
+    status: DRAFT
+    autonomy_risk: YELLOW
+    human_approval_required: false
+    auto_merge_allowed: false
+    depends_on:
+      - US-AGENT-0004
+      - US-RISK-0001
+      - US-OMS-0001
+    allowed_modules:
+      - tradingagents/audit/
+      - tradingagents/domain/
+      - alembic/versions/
+      - tests/unit/audit/
+    protected_modules:
+      - tradingagents/execution/
+    required_tests:
+      - tests/unit/audit/test_decision_trace.py
+      - tests/unit/audit/test_no_cot_storage.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+      - security_scan
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-AUDIT-0001"
+    pr_ref: null
+    migration_impact: additive
+
+  US-API-0001:
+    title: "POST /runs + GET /runs/{id}"
+    epic: EPIC-API-001
+    capability: CAP-API-001
+    github_issue: 16
+    status: DRAFT
+    autonomy_risk: BLUE
+    human_approval_required: false
+    auto_merge_allowed: false
+    depends_on:
+      - US-AGENT-0004
+      - US-RISK-0001
+    allowed_modules:
+      - apps/api/
+      - tradingagents/api/
+      - tests/unit/api/
+    protected_modules:
+      - tradingagents/execution/
+      - tradingagents/risk/engine/
+    required_tests:
+      - tests/unit/api/test_runs_endpoint.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-API-0001"
+    pr_ref: null
+    migration_impact: none
+
+  US-API-0002:
+    title: "SSE event stream /runs/{id}/events"
+    epic: EPIC-API-001
+    capability: CAP-API-001
+    github_issue: 17
+    status: DRAFT
+    autonomy_risk: BLUE
+    human_approval_required: false
+    auto_merge_allowed: false
+    depends_on:
+      - US-API-0001
+    allowed_modules:
+      - apps/api/
+      - tradingagents/api/
+      - tests/unit/api/
+    protected_modules:
+      - tradingagents/execution/
+    required_tests:
+      - tests/unit/api/test_sse_stream.py
+    required_checks:
+      - ruff
+      - mypy
+      - pytest
+      - architecture
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-API-0002"
+    pr_ref: null
+    migration_impact: none
+
+  US-UI-0001:
+    title: "Design system + layout shell"
+    epic: EPIC-UI-001
+    capability: CAP-UI-001
+    github_issue: 18
+    status: READY
+    autonomy_risk: GREEN
+    human_approval_required: false
+    auto_merge_allowed: true
+    depends_on:
+      - US-INFRA-0003
+    allowed_modules:
+      - apps/web/
+    protected_modules:
+      - tradingagents/
+      - apps/api/
+    required_tests:
+      - apps/web/src/__tests__/layout.test.tsx
+    required_checks:
+      - eslint
+      - typescript
+      - vitest
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-UI-0001"
+    pr_ref: null
+    migration_impact: none
+
+  US-UI-0002:
+    title: "Panel 01 — Dashboard principal"
+    epic: EPIC-UI-001
+    capability: CAP-UI-001
+    github_issue: 19
+    status: DRAFT
+    autonomy_risk: GREEN
+    human_approval_required: false
+    auto_merge_allowed: true
+    depends_on:
+      - US-UI-0001
+      - US-PORT-0001
+    allowed_modules:
+      - apps/web/src/
+    protected_modules:
+      - tradingagents/
+    required_tests:
+      - apps/web/src/__tests__/dashboard.test.tsx
+    required_checks:
+      - eslint
+      - typescript
+      - vitest
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-UI-0002"
+    pr_ref: null
+    migration_impact: none
+
+  US-UI-0003:
+    title: "Panel 02 — Centro Agéntico + Live Graph"
+    epic: EPIC-UI-001
+    capability: CAP-UI-001
+    github_issue: 20
+    status: DRAFT
+    autonomy_risk: GREEN
+    human_approval_required: false
+    auto_merge_allowed: true
+    depends_on:
+      - US-UI-0001
+      - US-API-0002
+    allowed_modules:
+      - apps/web/src/
+    protected_modules:
+      - tradingagents/
+    required_tests:
+      - apps/web/src/__tests__/agentic_center.test.tsx
+    required_checks:
+      - eslint
+      - typescript
+      - vitest
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-UI-0003"
+    pr_ref: null
+    migration_impact: none
+
+  US-UI-0004:
+    title: "Onboarding 5 pasos"
+    epic: EPIC-UI-001
+    capability: CAP-UI-001
+    github_issue: 21
+    status: DRAFT
+    autonomy_risk: GREEN
+    human_approval_required: false
+    auto_merge_allowed: true
+    depends_on:
+      - US-UI-0001
+      - US-SEC-0001
+    allowed_modules:
+      - apps/web/src/
+    protected_modules:
+      - tradingagents/
+    required_tests:
+      - apps/web/src/__tests__/onboarding.test.tsx
+    required_checks:
+      - eslint
+      - typescript
+      - vitest
+    acceptance_criteria_ref: "docs/11-user-stories/initial-20-stories.md#US-UI-0004"
+    pr_ref: null
+    migration_impact: none

@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://am-tradingagents/schemas/execution-state/v1",
+  "title": "ExecutionState",
+  "description": "Checkpoint state for the autonomous development orchestrator. Written after each step so execution can resume safely after interruption.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "execution_id",
+    "created_at",
+    "updated_at",
+    "active_story",
+    "current_step",
+    "last_completed_step",
+    "lifecycle_status"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "execution_id": {
+      "type": "string",
+      "description": "Unique ID for this orchestrator execution run (UUID v4)",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "active_story": {
+      "type": ["string", "null"],
+      "description": "Current story_id being processed, or null if idle",
+      "pattern": "^US-[A-Z]+-\\d{4}$"
+    },
+    "github_issue": {
+      "type": ["integer", "null"]
+    },
+    "branch": {
+      "type": ["string", "null"],
+      "description": "Git branch created for this story"
+    },
+    "base_commit": {
+      "type": ["string", "null"],
+      "description": "SHA of the commit when the branch was created"
+    },
+    "current_commit": {
+      "type": ["string", "null"],
+      "description": "Latest commit SHA on the story branch"
+    },
+    "current_step": {
+      "type": "integer",
+      "description": "1-indexed orchestrator step currently executing",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "last_completed_step": {
+      "type": "integer",
+      "description": "Last step that completed successfully",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "lifecycle_status": {
+      "type": "string",
+      "enum": [
+        "IDLE",
+        "HEALTH_CHECK",
+        "PICKING_STORY",
+        "IMPLEMENTING",
+        "VALIDATING",
+        "FIX_LOOP",
+        "ARCHITECTURE_REVIEW",
+        "CREATING_PR",
+        "WAITING_CI",
+        "DONE",
+        "BLOCKED_AUTOMATION",
+        "ERROR"
+      ]
+    },
+    "files_changed": {
+      "type": "array",
+      "description": "Files written by the local model in this story",
+      "items": { "type": "string" }
+    },
+    "checks_executed": {
+      "type": "array",
+      "description": "Validation checks that ran",
+      "items": {
+        "type": "object",
+        "required": ["tool", "passed", "timestamp"],
+        "properties": {
+          "tool": { "type": "string" },
+          "passed": { "type": "boolean" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "summary": { "type": "string" }
+        }
+      }
+    },
+    "failures": {
+      "type": "array",
+      "description": "Failures encountered (all attempts)",
+      "items": {
+        "type": "object",
+        "required": ["attempt", "step", "tool", "summary", "timestamp"],
+        "properties": {
+          "attempt": { "type": "integer", "minimum": 1 },
+          "step": { "type": "integer" },
+          "tool": { "type": "string" },
+          "summary": { "type": "string" },
+          "raw_output": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "repair_attempt_count": {
+      "type": "integer",
+      "description": "Number of fix-loop iterations attempted",
+      "minimum": 0,
+      "default": 0
+    },
+    "max_repair_attempts": {
+      "type": "integer",
+      "description": "Limit before BLOCKED_AUTOMATION",
+      "default": 3
+    },
+    "blocking_reason": {
+      "type": ["string", "null"],
+      "description": "Human-readable reason execution is blocked"
+    },
+    "next_action": {
+      "type": ["string", "null"],
+      "description": "What the orchestrator should do when resumed"
+    },
+    "pr_url": {
+      "type": ["string", "null"],
+      "description": "Created PR URL, once available"
+    },
+    "pr_number": {
+      "type": ["integer", "null"]
+    },
+    "model_used": {
+      "type": "string",
+      "description": "Physical model ID used for implementation",
+      "default": "qwen3.8-27b"
+    },
+    "implementation_start_time": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "implementation_end_time": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "tokens_used": {
+      "type": ["integer", "null"],
+      "description": "Approximate token count for implementation call"
+    }
+  },
+  "additionalProperties": false
+}

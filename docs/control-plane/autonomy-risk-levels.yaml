@@ -1,0 +1,169 @@
+# AM-TradingAgents — Autonomy Risk Classification
+# Defines what Claude Code may do autonomously at each risk level.
+# Every story in stories.yaml carries an autonomy_risk field.
+# Schema version: 1.0
+
+schema_version: "1.0"
+
+# ---------------------------------------------------------------------------
+# LEVEL DEFINITIONS
+# ---------------------------------------------------------------------------
+
+levels:
+
+  GREEN:
+    description: >
+      Low-risk changes with no financial, security, or architectural impact.
+      Fully autonomous execution permitted.
+    examples:
+      - documentation updates
+      - non-sensitive UI components (design system, layout shells)
+      - frontend unit tests
+      - new npm packages for UI only
+      - README, CHANGELOG
+    controls:
+      claude_may_implement: true
+      claude_may_create_pr: true
+      reviewer_agent_mandatory: false
+      auto_merge_allowed: true
+      human_approval_required: false
+      ci_gates_required:
+        - lint
+        - unit_tests
+      merge_policy: "auto after CI green"
+
+  BLUE:
+    description: >
+      Standard application code with contained scope. No financial execution,
+      no auth, no architecture changes. Autonomous implementation; manual PR review.
+    examples:
+      - ordinary Python application code
+      - REST API endpoints (no auth)
+      - data ingestion pipeline
+      - LangGraph agent nodes (non-execution)
+      - observability instrumentation
+      - non-migration DB read models
+    controls:
+      claude_may_implement: true
+      claude_may_create_pr: true
+      reviewer_agent_mandatory: true
+      auto_merge_allowed: false
+      human_approval_required: false
+      ci_gates_required:
+        - lint
+        - type_check
+        - unit_tests
+        - architecture_fitness
+        - traceability
+      merge_policy: "reviewer agent approval + CI green"
+
+  YELLOW:
+    description: >
+      Changes with cross-domain, architectural, security, or migration impact.
+      Requires Reviewer Agent + architecture guardian check.
+      Human approval strongly recommended.
+    examples:
+      - database schema migrations
+      - authentication / authorization
+      - cross-domain changes touching >2 bounded contexts
+      - new ADR-worthy architectural decisions
+      - portfolio position calculations
+      - audit/traceability infrastructure
+    controls:
+      claude_may_implement: true
+      claude_may_create_pr: true
+      reviewer_agent_mandatory: true
+      auto_merge_allowed: false
+      human_approval_required: true
+      ci_gates_required:
+        - lint
+        - type_check
+        - unit_tests
+        - architecture_fitness
+        - traceability
+        - migration_safety
+      merge_policy: "reviewer agent + architecture guardian + human approval + CI green"
+      notes:
+        - "New migration requires rollback plan documented in PR"
+        - "ADR required if new architectural pattern introduced"
+
+  ORANGE:
+    description: >
+      High-risk financial logic. Risk Engine, OMS, Execution, Broker integration.
+      Claude may implement but NOT merge without explicit human review.
+      Extra validation layer required.
+    examples:
+      - Risk Engine code (risk/engine/)
+      - Order Management System (oms/)
+      - BrokerGateway abstraction and implementations
+      - Kill Switch
+      - TradeIntent validation logic
+      - Position sizing / stop-loss calculations
+    controls:
+      claude_may_implement: true
+      claude_may_create_pr: true
+      reviewer_agent_mandatory: true
+      auto_merge_allowed: false
+      human_approval_required: true
+      ci_gates_required:
+        - lint
+        - type_check
+        - unit_tests
+        - architecture_fitness
+        - security_scan
+        - traceability
+        - contract_tests
+      merge_policy: "reviewer agent + architecture guardian + security check + explicit human approval + CI green"
+      notes:
+        - "Risk Engine must pass no-LLM-import architecture test"
+        - "OMS must pass risk-gate-enforced test (no order without RiskVerdict.APPROVED)"
+        - "Broker code must default to PAPER mode"
+        - "All LIVE guards must be tested"
+
+  RED:
+    description: >
+      Forbidden from autonomous execution. These changes may only be made
+      by a human developer with explicit authorization.
+      Claude must refuse to implement these even if instructed.
+    examples:
+      - production secrets or credentials
+      - production infrastructure changes
+      - LIVE trading activation
+      - irreversible data operations
+      - disabling security checks
+      - changing secret boundaries
+      - modifying kill switch deactivation logic
+    controls:
+      claude_may_implement: false
+      claude_may_create_pr: false
+      reviewer_agent_mandatory: false
+      auto_merge_allowed: false
+      human_approval_required: true
+      ci_gates_required: []
+      merge_policy: "BLOCKED — human only"
+      notes:
+        - "Claude MUST refuse RED requests and explain why"
+        - "Any attempt to classify RED work as lower risk is itself a RED violation"
+
+# ---------------------------------------------------------------------------
+# ESCALATION RULES
+# ---------------------------------------------------------------------------
+escalation:
+  - rule: "If a story spans multiple risk levels, the HIGHEST level applies to the entire story"
+  - rule: "If a fix introduces ORANGE/RED changes to resolve a GREEN/BLUE failure, escalate immediately — do not auto-repair"
+  - rule: "Architecture violations discovered during implementation escalate to YELLOW minimum"
+  - rule: "Any change to risk/engine/ automatically escalates to ORANGE regardless of story classification"
+  - rule: "Any accidental credential exposure escalates to RED — stop execution, do not push"
+
+# ---------------------------------------------------------------------------
+# COST GUARDRAILS (per story, override in stories.yaml)
+# ---------------------------------------------------------------------------
+default_guardrails:
+  max_repair_attempts: 3
+  max_agent_delegation_depth: 2
+  max_concurrent_coding_agents: 1
+  implementation_timeout_seconds: 600
+  validation_timeout_seconds: 300
+  fix_loop_timeout_seconds: 900
+  token_budget_warning_threshold: 50000
+  token_budget_hard_limit: 150000

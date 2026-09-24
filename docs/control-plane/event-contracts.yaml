@@ -1,0 +1,228 @@
+# AM-TradingAgents — Development Event Contracts
+# Covers both: (a) Development Control events, (b) Runtime Trading events
+# These are the canonical event envelope and event type definitions.
+# Schema version: 1.0
+
+schema_version: "1.0"
+
+# ---------------------------------------------------------------------------
+# COMMON EVENT ENVELOPE
+# Used by both Development Control events and Trading runtime events.
+# ---------------------------------------------------------------------------
+event_envelope:
+  description: >
+    Versioned envelope wrapping any event in the system.
+    Development events and trading events share the envelope but have
+    separate payload schemas — do not force a shared domain model.
+  fields:
+    event_id:
+      type: uuid
+      required: true
+      description: "Globally unique event identifier (UUID v4)"
+    event_type:
+      type: string
+      required: true
+      description: "Fully-qualified event type: <namespace>.<entity>.<verb>"
+      examples:
+        - "dev.story.ready"
+        - "dev.pr.merged"
+        - "trading.trade_intent.created"
+        - "trading.risk.approved"
+    occurred_at:
+      type: datetime_iso8601
+      required: true
+    correlation_id:
+      type: uuid
+      required: true
+      description: "Links all events in one logical operation (e.g. a TradingRun)"
+    causation_id:
+      type: uuid
+      required: false
+      description: "event_id of the event that caused this one"
+    source:
+      type: string
+      required: true
+      description: "System/service that emitted the event"
+      examples:
+        - "dev-orchestrator"
+        - "tradingagents-core"
+        - "risk-engine"
+        - "oms"
+    schema_version:
+      type: string
+      required: true
+      description: "Payload schema version (semver)"
+      example: "1.0"
+    payload:
+      type: object
+      required: true
+      description: "Event-type-specific payload — see event definitions below"
+
+# ---------------------------------------------------------------------------
+# DEVELOPMENT CONTROL EVENTS
+# namespace: dev.*
+# ---------------------------------------------------------------------------
+development_events:
+
+  dev.story.ready:
+    description: "A story's dependencies are all DONE; it may be picked for implementation"
+    payload:
+      story_id: { type: string }
+      github_issue: { type: integer }
+      autonomy_risk: { type: string }
+      depends_on: { type: array, items: string }
+
+  dev.story.started:
+    description: "Orchestrator has started implementing a story"
+    payload:
+      story_id: { type: string }
+      execution_id: { type: uuid }
+      model: { type: string }
+      branch: { type: string }
+
+  dev.story.blocked:
+    description: "Story cannot proceed — max retries exceeded or RED violation"
+    payload:
+      story_id: { type: string }
+      execution_id: { type: uuid }
+      blocking_reason: { type: string }
+      repair_attempts: { type: integer }
+      last_failure: { type: string }
+
+  dev.story.completed:
+    description: "Story implementation passed all checks; PR created"
+    payload:
+      story_id: { type: string }
+      execution_id: { type: uuid }
+      pr_url: { type: string }
+      pr_number: { type: integer }
+      files_changed: { type: array, items: string }
+      duration_seconds: { type: number }
+      tokens_used: { type: integer, nullable: true }
+
+  dev.pr.opened:
+    description: "PR created on GitHub"
+    payload:
+      story_id: { type: string }
+      pr_number: { type: integer }
+      pr_url: { type: string }
+      branch: { type: string }
+      base_branch: { type: string }
+      risk_level: { type: string }
+
+  dev.pr.review_requested:
+    description: "Reviewer agent or human review requested"
+    payload:
+      pr_number: { type: integer }
+      reviewer_type: { type: string, enum: [agent, human] }
+
+  dev.pr.ci_failed:
+    description: "CI pipeline failed on the PR"
+    payload:
+      pr_number: { type: integer }
+      story_id: { type: string }
+      failed_checks: { type: array, items: string }
+      repair_allowed: { type: boolean }
+
+  dev.pr.ci_passed:
+    description: "All CI checks passed on the PR"
+    payload:
+      pr_number: { type: integer }
+      story_id: { type: string }
+      passed_checks: { type: array, items: string }
+
+  dev.pr.merged:
+    description: "PR merged to target branch"
+    payload:
+      pr_number: { type: integer }
+      story_id: { type: string }
+      merge_sha: { type: string }
+      merged_by: { type: string }
+      auto_merged: { type: boolean }
+
+  dev.architecture.changed:
+    description: "An architectural decision was made (new ADR created or updated)"
+    payload:
+      adr_id: { type: string }
+      story_id: { type: string }
+      pr_number: { type: integer }
+      decision_summary: { type: string }
+
+  dev.architecture.violation:
+    description: "Architecture fitness function detected a violation"
+    payload:
+      story_id: { type: string }
+      file: { type: string }
+      rule: { type: string }
+      violation: { type: string }
+      auto_blocked: { type: boolean }
+
+  dev.documentation.updated:
+    description: "Documentation was updated as part of a story"
+    payload:
+      story_id: { type: string }
+      docs_changed: { type: array, items: string }
+
+  dev.release.created:
+    description: "A release tag was created"
+    payload:
+      tag: { type: string }
+      commit_sha: { type: string }
+      stories_included: { type: array, items: string }
+
+# ---------------------------------------------------------------------------
+# TRADING RUNTIME EVENTS (for reference — full domain in domain-model.md)
+# namespace: trading.*
+# ---------------------------------------------------------------------------
+trading_events:
+
+  trading.trading_run.started:
+    payload:
+      run_id: { type: uuid }
+      tenant_id: { type: uuid }
+      symbol: { type: string }
+      mode: { type: string, enum: [PAPER, BACKTEST, LIVE] }
+
+  trading.trade_intent.created:
+    payload:
+      intent_id: { type: uuid }
+      run_id: { type: uuid }
+      symbol: { type: string }
+      action: { type: string, enum: [BUY, SELL, HOLD] }
+      stop_loss: { type: number, nullable: true }
+
+  trading.risk.approved:
+    payload:
+      assessment_id: { type: uuid }
+      intent_id: { type: uuid }
+      rule_results: { type: array }
+
+  trading.risk.rejected:
+    payload:
+      assessment_id: { type: uuid }
+      intent_id: { type: uuid }
+      rejection_reason: { type: string }
+      rule_violated: { type: string }
+
+  trading.order.created:
+    payload:
+      order_id: { type: uuid }
+      intent_id: { type: uuid }
+      run_id: { type: uuid }
+      symbol: { type: string }
+      side: { type: string }
+      quantity: { type: number }
+      order_type: { type: string }
+
+  trading.order.filled:
+    payload:
+      order_id: { type: uuid }
+      filled_at: { type: datetime }
+      filled_price: { type: number }
+      filled_quantity: { type: number }
+
+  trading.kill_switch.activated:
+    payload:
+      activated_by: { type: string }
+      reason: { type: string }
+      affected_runs: { type: array, items: uuid }
