@@ -279,7 +279,7 @@ stories:
     epic: EPIC-AGENT-001
     capability: CAP-AGENT-001
     github_issue: 8
-    status: DRAFT
+    status: BLOCKED_AUTOMATION
     autonomy_risk: BLUE
     human_approval_required: false
     auto_merge_allowed: false

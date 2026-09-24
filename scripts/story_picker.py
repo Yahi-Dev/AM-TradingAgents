@@ -49,8 +49,8 @@ def find_next_story(stories: dict) -> dict | None:
         story = stories[story_id]
         status = story.get("status", "DRAFT")
 
-        # Skip already done
-        if status == "DONE":
+        # Skip terminal/blocked statuses
+        if status in ("DONE", "BLOCKED_AUTOMATION"):
             continue
 
         # Skip RED (never autonomous)
@@ -59,8 +59,8 @@ def find_next_story(stories: dict) -> dict | None:
 
         # Only GREEN/BLUE are safe for autonomous execution
         if story.get("autonomy_risk") not in AUTONOMOUS_RISKS:
-            # Could auto-skip YELLOW/ORANGE, or implement with caution
-            pass  # For now, skip high-risk
+            # Skip YELLOW/ORANGE — require explicit approval
+            continue
 
         # Check dependencies
         deps = story.get("depends_on", [])
