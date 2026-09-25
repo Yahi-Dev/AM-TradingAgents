@@ -1,0 +1,384 @@
+/* Estructura: Rail (72px) + columna principal (Topbar 64px + contenido). */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  min-height: 100dvh;
+  background: var(--bg-0);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 1680px;
+  padding: var(--content-pad-y) var(--content-pad-x) 40px;
+}
+
+.setupBanner {
+  margin-bottom: var(--space-5);
+}
+
+/* Rail ----------------------------------------------------------------- */
+.rail {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-rail);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0;
+  background: var(--bg-1);
+  border-right: 1px solid var(--border);
+}
+
+.logo {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: 1px solid var(--amber);
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+.logo:hover {
+  text-decoration: none;
+}
+
+.navList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  align-items: center;
+}
+
+.navItem {
+  position: relative;
+  width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 2px 7px;
+  border-radius: 9px;
+  color: var(--text-2);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-align: center;
+  transition:
+    color var(--transition),
+    background-color var(--transition);
+}
+.navItem:hover {
+  color: var(--text-0);
+  background: var(--surface-1);
+  text-decoration: none;
+}
+.navItemActive,
+.navItemActive:hover {
+  color: var(--amber);
+  background: var(--amber-soft);
+}
+/* Línea vertical ámbar junto al elemento activo. */
+.navItemActive::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--amber);
+}
+
+.navShort {
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.railFooter {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text-1);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Topbar --------------------------------------------------------------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-topbar);
+  min-height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px var(--content-pad-x);
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbarKill {
+  border: 2px solid var(--rose);
+  background: linear-gradient(0deg, var(--rose-soft), var(--rose-soft)), var(--bg-1);
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+}
+.crumbWorkspace {
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+}
+.crumbSep {
+  color: var(--text-2);
+}
+.crumbCurrent {
+  color: var(--text-0);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbarRight {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.modeGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.modeLabel {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.liveLocked {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px dashed var(--border-strong);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.workerChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+.workerDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-2);
+  flex: none;
+}
+.workerChipActive {
+  color: var(--text-1);
+  border-color: rgba(55, 196, 141, 0.35);
+}
+.workerChipActive .workerDot {
+  background: var(--green);
+  box-shadow: 0 0 0 3px var(--green-soft);
+}
+
+.killBanner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--rose);
+  color: #140a0c;
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.killButton {
+  letter-spacing: 0.04em;
+}
+
+.user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-left: 10px;
+  border-left: 1px solid var(--border);
+}
+.userEmail {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-1);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.logoutForm {
+  display: inline-flex;
+}
+
+.dialogReason {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dialogError {
+  color: var(--rose);
+  font-size: 12.5px;
+}
+
+/* Responsive: < 900px el rail pasa a barra horizontal desplazable. ------ */
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+  }
+  .main {
+    display: contents;
+  }
+  .topbar {
+    grid-row: 1;
+    position: static;
+    flex-wrap: wrap;
+    padding: 10px 16px;
+  }
+  .rail {
+    grid-row: 2;
+    position: sticky;
+    top: 0;
+    height: auto;
+    flex-direction: row;
+    padding: 6px 12px;
+    gap: 8px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+  }
+  .logo {
+    margin-bottom: 0;
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+  .navList {
+    flex-direction: row;
+    width: auto;
+    gap: 4px;
+  }
+  .navItem {
+    width: auto;
+    flex-direction: row;
+    gap: 6px;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  .navItemActive::before {
+    left: 10px;
+    right: 10px;
+    top: auto;
+    bottom: -6px;
+    width: auto;
+    height: 2px;
+  }
+  .railFooter {
+    display: none;
+  }
+  .content {
+    grid-row: 3;
+    padding: 16px 16px 32px;
+  }
+  .crumbWorkspace,
+  .crumbSep {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .userEmail,
+  .modeLabel,
+  .liveText,
+  .workerStateText {
+    display: none;
+  }
+  .user {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .topbarRight {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

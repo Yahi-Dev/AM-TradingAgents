@@ -1,0 +1,70 @@
+.page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-0);
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px var(--content-pad-x);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-1);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+.logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--amber);
+  background: var(--amber-soft);
+  color: var(--amber);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+.user {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.email {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 240px;
+}
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 32px var(--content-pad-x) 48px;
+}
+/* Onboarding ya completado. */
+.done {
+  max-width: 560px;
+  margin: 0 auto;
+}
+@media (max-width: 560px) {
+  .header,
+  .content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .email {
+    display: none;
+  }
+}

@@ -1,0 +1,257 @@
+/* Portfolio y riesgo ------------------------------------------------------ */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: var(--gap-lg);
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Aviso de estado honesto (qué existe y qué no). */
+.notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--info);
+  border-radius: var(--radius-card);
+  background: var(--info-soft);
+  color: var(--text-1);
+}
+.noticeIcon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--info);
+  color: var(--info);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+.noticeText {
+  min-width: 0;
+}
+.noticeText strong {
+  color: var(--text-0);
+}
+
+/* Límites de riesgo ------------------------------------------------------ */
+.limitList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.limitItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.limitHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.limitLabel {
+  font-weight: 600;
+}
+.limitValue {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--amber);
+  white-space: nowrap;
+}
+.limitHelp {
+  color: var(--text-1);
+  font-size: 12.5px;
+}
+.meter {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.meterZone {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, rgba(55, 196, 141, 0.28), rgba(229, 161, 59, 0.35));
+  border-right: 2px solid var(--amber);
+}
+.meterFoot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+/* Kill switch -------------------------------------------------------------- */
+.ksStatus {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ksIcon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  border: 2px solid var(--green);
+  color: var(--green);
+  background: var(--green-soft);
+}
+.ksIconActive {
+  border-color: var(--rose);
+  color: var(--rose);
+  background: var(--rose-soft);
+}
+.ksTitle {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.ksTitleActive {
+  color: var(--rose);
+}
+.ksTitleInactive {
+  color: var(--green);
+}
+.ksMeta {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  font-size: 12.5px;
+}
+.ksMeta dt {
+  color: var(--text-2);
+}
+.ksMeta dd {
+  margin: 0;
+  color: var(--text-1);
+  overflow-wrap: anywhere;
+}
+.confirmBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--surface-2);
+}
+.feedbackError {
+  color: var(--rose);
+  font-size: 12.5px;
+}
+.feedbackOk {
+  color: var(--green);
+  font-size: 12.5px;
+}
+
+/* Checklist pre-trade ----------------------------------------------------- */
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.checkItem {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.checkItem:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.checkIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px dashed var(--border-strong);
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.checkBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.checkHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+}
+.checkName {
+  font-weight: 600;
+}
+.checkCode {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+}
+.checkDesc {
+  color: var(--text-1);
+  font-size: 12.5px;
+}
+
+.cellStack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.nowrap {
+  white-space: nowrap;
+}
+
+
+.tableFoot {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.rationale {
+  display: block;
+  min-width: 180px;
+  max-width: 280px;
+  white-space: normal;
+}

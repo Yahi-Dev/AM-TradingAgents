@@ -1,0 +1,12 @@
+/* Páginas fuera del shell (login, onboarding, 404, error). */
+.center {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+.center > * {
+  width: 100%;
+  max-width: 520px;
+}

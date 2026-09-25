@@ -29,6 +29,16 @@
 
 # TradingAgents: Multi-Agents LLM Financial Trading Framework
 
+## Despliegue de pruebas (Vercel + Supabase)
+
+La rama `prod-desarrollo-agentico` incluye el **AM Command Center**: una web (Next.js, en
+`frontend/`) que se despliega gratis en **Vercel Hobby** con **Supabase Free** (base de datos,
+login y tiempo real). La web solo encola los análisis; los ejecuta un worker en tu PC
+(`scripts/supabase_worker.py`) con tu modelo local. Sin broker: nada envía órdenes y el modo
+`LIVE` está bloqueado.
+
+Guía paso a paso en español: **[docs/deploy/vercel-supabase.md](docs/deploy/vercel-supabase.md)**.
+
 ## News
 - [2026-09] **TradingAgents v0.5.0** released with point-in-time integrity across every dated path, SEC EDGAR fundamentals served as filed, backtesting over a ticker and date grid, portfolio-aware runs, and current model lineups across every provider. See [CHANGELOG.md](CHANGELOG.md) for the full list.
 - [2026-08] **TradingAgents v0.4.0** released with look-ahead / point-in-time fixes across FRED macro, social sentiment, and the decision-log memory; clearer decision signals; working CLI checkpoint resume; Trader price grounding; and the GPT-5.6 and GLM-5.3 models.

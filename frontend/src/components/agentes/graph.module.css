@@ -1,0 +1,323 @@
+/* Live Agent Graph (SVG inline). Colores = tokens del sistema de diseño. */
+
+.scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.graph {
+  display: block;
+  width: 100%;
+  min-width: 940px;
+  height: auto;
+  font-family: var(--font-ui);
+}
+
+.stageLabel {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  fill: var(--text-2);
+}
+
+/* Aristas ---------------------------------------------------------------- */
+.edge {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  transition: stroke var(--transition);
+}
+.arrowHead {
+  stroke: none;
+}
+/* Solo `stroke` en las aristas: un `fill` aquí rellenaría las curvas (un path
+   SVG abierto con relleno se cierra implícitamente). El relleno es solo para
+   las puntas de flecha (.arrowHead.edgeX, más específico). */
+.edgeIdle {
+  stroke: var(--border-strong);
+}
+.edgeDone {
+  stroke: rgba(55, 196, 141, 0.55);
+}
+.edgeActive {
+  stroke: var(--amber);
+}
+path.edgeActive {
+  stroke-dasharray: 6 5;
+  animation: flow 0.9s linear infinite;
+}
+.edgeInactive {
+  stroke: var(--border);
+}
+path.edgeInactive {
+  stroke-dasharray: 3 4;
+}
+.edgeReserved {
+  stroke: var(--border-strong);
+}
+path.edgeReserved {
+  stroke-dasharray: 4 4;
+}
+/* Las puntas de flecha no llevan trazo, solo relleno. */
+.arrowHead.edgeIdle,
+.arrowHead.edgeDone,
+.arrowHead.edgeActive,
+.arrowHead.edgeInactive,
+.arrowHead.edgeReserved {
+  stroke: none;
+  stroke-dasharray: none;
+  animation: none;
+}
+.arrowHead.edgeIdle,
+.arrowHead.edgeReserved {
+  fill: var(--border-strong);
+}
+.arrowHead.edgeDone {
+  fill: rgba(55, 196, 141, 0.75);
+}
+.arrowHead.edgeActive {
+  fill: var(--amber);
+}
+.arrowHead.edgeInactive {
+  fill: var(--border);
+}
+/* Red de seguridad: ninguna arista se rellena. */
+path.edge {
+  fill: none;
+}
+@keyframes flow {
+  to {
+    stroke-dashoffset: -11;
+  }
+}
+
+.junction {
+  fill: var(--border-strong);
+}
+.junctionDone {
+  fill: var(--green);
+}
+.edgeLabel {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  fill: var(--text-2);
+}
+
+/* Nodos -------------------------------------------------------------------- */
+.nodeLink {
+  cursor: pointer;
+  outline: none;
+}
+.nodeLink:hover .box {
+  fill: var(--surface-3);
+}
+.nodeLink:focus-visible .box {
+  stroke: var(--amber);
+  stroke-width: 2;
+}
+
+.box {
+  fill: var(--surface-2);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  transition:
+    fill var(--transition),
+    stroke var(--transition);
+}
+.icon {
+  fill: var(--surface-3);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+.glyph {
+  fill: none;
+  stroke: var(--text-1);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.glyphDot,
+.glyphFill {
+  fill: var(--text-1);
+}
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--text-0);
+}
+.sub {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  fill: var(--text-2);
+}
+
+/* Completado: verde */
+.nodeDone .box {
+  fill: #13221d;
+  stroke: rgba(55, 196, 141, 0.55);
+}
+.nodeDone .icon {
+  fill: var(--green);
+  stroke: var(--green);
+}
+.nodeDone .glyph {
+  stroke: #0b1511;
+  stroke-width: 1.9;
+}
+.nodeDone .sub {
+  fill: var(--green);
+}
+
+/* En curso: ámbar con halo pulsante */
+.nodeRunning .box {
+  fill: #2a2114;
+  stroke: var(--amber);
+  stroke-width: 1.5;
+}
+.nodeRunning .icon {
+  fill: var(--amber-soft);
+  stroke: var(--amber);
+}
+.nodeRunning .glyphDot {
+  fill: var(--amber);
+  animation: blink 1.2s ease-in-out infinite;
+}
+.nodeRunning .sub {
+  fill: var(--amber);
+}
+.halo {
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 1;
+  opacity: 0.5;
+  animation: halo 1.6s ease-in-out infinite;
+}
+@keyframes halo {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* Pendiente: gris atenuado */
+.nodePending {
+  opacity: 0.6;
+}
+
+/* No seleccionado: contorno discontinuo muy atenuado */
+.nodeInactive {
+  opacity: 0.38;
+}
+.nodeInactive .box {
+  fill: transparent;
+  stroke-dasharray: 4 4;
+}
+
+/* Fallido / interrumpido: rosa */
+.nodeFailed .box {
+  fill: #2a151a;
+  stroke: var(--rose);
+}
+.nodeFailed .icon {
+  fill: var(--rose-soft);
+  stroke: var(--rose);
+}
+.nodeFailed .glyph {
+  stroke: var(--rose);
+}
+.nodeFailed .sub {
+  fill: var(--rose);
+}
+.nodeStopped .box {
+  stroke: var(--rose);
+  stroke-dasharray: 5 3;
+}
+.nodeStopped .glyphFill {
+  fill: var(--rose);
+}
+.nodeStopped .sub {
+  fill: var(--rose);
+}
+
+/* Sin informe */
+.nodeSkipped {
+  opacity: 0.7;
+}
+
+/* Reservado (TradeIntent / Risk Engine): pendiente de próximas historias */
+.nodeReserved {
+  opacity: 0.7;
+}
+.nodeReserved .box {
+  fill: transparent;
+  stroke-dasharray: 4 4;
+}
+.nodeReserved .label {
+  fill: var(--text-1);
+}
+
+/* Leyenda ------------------------------------------------------------------ */
+.legend {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 12px;
+  color: var(--text-1);
+}
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.legendSwatch {
+  width: 14px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  flex-shrink: 0;
+}
+.swatch-done {
+  background: #13221d;
+  border-color: var(--green);
+}
+.swatch-running {
+  background: #2a2114;
+  border-color: var(--amber);
+}
+.swatch-pending {
+  opacity: 0.6;
+}
+.swatch-inactive {
+  background: transparent;
+  border-style: dashed;
+  opacity: 0.6;
+}
+.swatch-failed {
+  background: #2a151a;
+  border-color: var(--rose);
+}
+.swatchReserved {
+  background: transparent;
+  border-style: dashed;
+}
